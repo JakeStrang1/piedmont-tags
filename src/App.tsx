@@ -1,13 +1,12 @@
-import './App.css'
+import { Route, Routes } from 'react-router-dom'
+import MainMenu from './components/MainMenu'
+import PrintTags from './components/PrintTags'
 
-function App() {
-  return (
-    <div className="app-shell">
-      <button type="button" className="print-button">
-        Print Tags
-      </button>
-    </div>
-  )
-}
+const App = () => (
+  <Routes>
+    <Route path="/" element={<MainMenu />} />
+    <Route path="/print" element={<PrintTags />} />
+  </Routes>
+)
 
 export default App
