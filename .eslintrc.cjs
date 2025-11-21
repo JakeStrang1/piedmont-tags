@@ -6,9 +6,15 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:react-hooks/recommended',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  ignorePatterns: ['dist', 'dist-electron', '.eslintrc.cjs'],
   parser: '@typescript-eslint/parser',
   plugins: ['react-refresh'],
+  overrides: [
+    {
+      files: ['electron/**/*.ts', '*.cjs'],
+      env: { node: true, browser: false },
+    },
+  ],
   rules: {
     'react-refresh/only-export-components': [
       'warn',
