@@ -7,7 +7,7 @@ interface EditableTagProps {
 
 const EditableTag = ({ tagNumber, tagText, onTagNumberChange, onTagTextChange }: EditableTagProps) => {
     return (
-        <div className="aspect-[3/2] w-full border border-slate-900 bg-white p-10 shadow-xl">
+        <div className="aspect-[3/2] w-full border border-slate-900 bg-white p-10 shadow-xl print-tag-container">
             <div className="flex h-full flex-col items-center justify-center gap-5">
                 <input
                     type="text"
