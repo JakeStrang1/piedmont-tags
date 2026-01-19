@@ -27,10 +27,15 @@ let win: BrowserWindow | null
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    show: false, // Don't show until maximized
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
+
+  // Maximize the window before showing it
+  win.maximize()
+  win.show()
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
