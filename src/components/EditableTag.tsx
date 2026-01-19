@@ -32,8 +32,10 @@ const EditableTag = ({ tagNumber, tagText, onTagNumberChange, onTagTextChange, p
     // For printable, scale is always 1 (no transform)
     const scaleValue = printable ? 1 : settings.scale
 
-    // Get colors for this tag (rotate through 5 colors)
-    const colors = CHECKERBOARD_COLORS[colorIndex % CHECKERBOARD_COLORS.length]
+    // Get colors for this tag (rotate through 5 colors if no custom color is set)
+    const colors = settings.checkerboardColor
+        ? null // Use custom color instead
+        : CHECKERBOARD_COLORS[colorIndex % CHECKERBOARD_COLORS.length]
 
     // Render a checkerboard corner
     const renderCheckerboard = (position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
@@ -52,10 +54,25 @@ const EditableTag = ({ tagNumber, tagText, onTagNumberChange, onTagTextChange, p
                     const row = Math.floor(index / CHECKERBOARD_WIDTH)
                     const col = index % CHECKERBOARD_WIDTH
                     const isEven = (row + col) % 2 === 0
+
+                    // Use custom hex color if provided, otherwise use Tailwind classes
+                    if (settings.checkerboardColor) {
+                        return (
+                            <div
+                                key={index}
+                                style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    backgroundColor: isEven ? settings.checkerboardColor : '#ffffff'
+                                }}
+                            />
+                        )
+                    }
+
                     return (
                         <div
                             key={index}
-                            className={isEven ? colors.even : colors.odd}
+                            className={isEven ? colors!.even : colors!.odd}
                             style={{ width: '20px', height: '20px' }}
                         />
                     )

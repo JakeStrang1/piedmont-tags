@@ -91,7 +91,7 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
         }
     }, [settings, isOpen])
 
-    const handleChange = (key: keyof typeof settings, value: number | boolean) => {
+    const handleChange = (key: keyof typeof settings, value: number | boolean | string | undefined) => {
         setLocalSettings((prev) => ({ ...prev, [key]: value }))
     }
 
@@ -112,6 +112,7 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
             labelHeightInches: 2,
             scale: 1.5,
             showPrintCorners: false,
+            checkerboardColor: undefined,
         }
         setLocalSettings(defaultValues)
     }
@@ -214,20 +215,50 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
                             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700">
                                 Print Features
                             </h3>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    id="showPrintCorners"
-                                    checked={localSettings.showPrintCorners}
-                                    onChange={(e) =>
-                                        handleChange('showPrintCorners', e.target.checked)
-                                    }
-                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
-                                />
-                                <label htmlFor="showPrintCorners" className="flex items-center text-sm font-medium text-slate-700">
-                                    Show Print Corners
-                                    <HelpTooltip description="When enabled, displays color-coded checkerboard corners on each tag for print alignment. Each tag uses a different color that rotates through 5 colors." />
-                                </label>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="showPrintCorners"
+                                        checked={localSettings.showPrintCorners}
+                                        onChange={(e) =>
+                                            handleChange('showPrintCorners', e.target.checked)
+                                        }
+                                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                                    />
+                                    <label htmlFor="showPrintCorners" className="flex items-center text-sm font-medium text-slate-700">
+                                        Show Print Corners
+                                        <HelpTooltip description="When enabled, displays color-coded checkerboard corners on each tag for print alignment. Each tag uses a different color that rotates through 5 colors, or the custom color if specified." />
+                                    </label>
+                                </div>
+                                {localSettings.showPrintCorners && (
+                                    <div>
+                                        <label className="mb-1 flex items-center text-sm font-medium text-slate-700">
+                                            Checkerboard Color (Hex)
+                                            <HelpTooltip description="Optional hex color code for checkerboard squares. Darker squares will use this color, lighter squares will be white. Leave empty to use the default color rotation." />
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="#000000"
+                                                value={localSettings.checkerboardColor || ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.trim()
+                                                    handleChange('checkerboardColor', value === '' ? undefined : value)
+                                                }}
+                                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                pattern="^#[0-9A-Fa-f]{6}$"
+                                            />
+                                            {localSettings.checkerboardColor && (
+                                                <div
+                                                    className="h-10 w-10 rounded border border-slate-300 flex-shrink-0"
+                                                    style={{ backgroundColor: localSettings.checkerboardColor }}
+                                                    title={localSettings.checkerboardColor}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

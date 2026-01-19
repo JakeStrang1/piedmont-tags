@@ -5,6 +5,7 @@ export interface TagSettings {
     labelHeightInches: number
     scale: number
     showPrintCorners: boolean
+    checkerboardColor?: string // Optional hex color code for checkerboards
 }
 
 const DEFAULT_SETTINGS: TagSettings = {
@@ -12,6 +13,7 @@ const DEFAULT_SETTINGS: TagSettings = {
     labelHeightInches: 2,
     scale: 1.5,
     showPrintCorners: false,
+    checkerboardColor: undefined,
 }
 
 const STORAGE_KEY = 'tagSettings'
