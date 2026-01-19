@@ -160,7 +160,7 @@ const PrintTags = () => {
                     position: 'fixed',
                     top: 0,
                     left: 0,
-                    width: showPreview ? `${getTagDimensionsPx(settings.labelWidthInches, settings.labelHeightInches).width}px` : 0,
+                    width: showPreview ? `${settings.labelWidthInches}in` : 0,
                     height: showPreview ? '600px' : 0,
                     margin: 0,
                     padding: 0,
@@ -210,7 +210,7 @@ const PrintTags = () => {
                                     type="button"
                                     onClick={addCard}
                                     className="flex h-20 items-center justify-center border-2 border-dashed border-slate-400 bg-slate-100 text-slate-600 transition-all hover:border-slate-500 hover:bg-slate-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                                    style={{ width: `${getTagDimensionsPx(settings.labelWidthInches, settings.labelHeightInches).width}px` }}
+                                    style={{ width: `${settings.labelWidthInches}in` }}
                                 >
                                     <span className="text-xl font-medium">+ Add Tag</span>
                                 </button>

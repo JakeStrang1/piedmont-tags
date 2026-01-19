@@ -1,8 +1,8 @@
 import { getTagDimensionsPx } from './tagConstants'
 import { useTagSettings } from '../hooks/useTagSettings'
 
-const CHECKERBOARD_WIDTH = 29
-const CHECKERBOARD_HEIGHT = 19
+const CHECKERBOARD_WIDTH = 3
+const CHECKERBOARD_HEIGHT = 3
 
 interface EditableTagProps {
     tagNumber: string
@@ -15,23 +15,23 @@ interface EditableTagProps {
 const EditableTag = ({ tagNumber, tagText, onTagNumberChange, onTagTextChange, printable = false }: EditableTagProps) => {
     const { settings } = useTagSettings()
     // Calculate pixel dimensions from label dimensions in settings
-    const { width: widthPx, height: heightPx } = getTagDimensionsPx(
-        settings.labelWidthInches,
-        settings.labelHeightInches
-    )
+    // const { width: widthPx, height: heightPx } = getTagDimensionsPx(
+    //     settings.labelWidthInches,
+    //     settings.labelHeightInches
+    // )
 
     return (
         <div
             className={`relative border border-slate-900 bg-white p-10 ${printable ? '' : 'shadow-xl'}`}
             style={{
-                width: `${widthPx}px`,
-                height: `${heightPx}px`,
+                width: `${settings.labelWidthInches}in`,
+                height: `${settings.labelHeightInches}in`,
                 boxSizing: 'border-box',
                 flexShrink: 0,
-                minWidth: `${widthPx}px`,
-                maxWidth: `${widthPx}px`,
-                minHeight: `${heightPx}px`,
-                maxHeight: `${heightPx}px`,
+                minWidth: `${settings.labelWidthInches}in`,
+                maxWidth: `${settings.labelWidthInches}in`,
+                minHeight: `${settings.labelHeightInches}in`,
+                maxHeight: `${settings.labelHeightInches}in`,
                 display: 'block',
             }}
         >
