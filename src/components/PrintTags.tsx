@@ -4,7 +4,8 @@ import WrappedTag from './WrappedTag'
 import EditableTag from './EditableTag'
 import Printable from './Printable'
 import PrintSettings from './PrintSettings'
-import { PRINTABLE_WIDTH, TAG_MAX_CONTAINER_WIDTH, TAG_WRAPPER_WIDTH, TAG_GAP } from './tagConstants'
+import { PRINTABLE_WIDTH, TAG_MAX_CONTAINER_WIDTH, TAG_WRAPPER_WIDTH, TAG_GAP, getTagDimensionsPx } from './tagConstants'
+import { usePrintSettings } from '../hooks/usePrintSettings'
 
 interface TagData {
     id: number
@@ -14,6 +15,7 @@ interface TagData {
 
 const PrintTags = () => {
     const navigate = useNavigate()
+    const { settings } = usePrintSettings()
     const [cards, setCards] = useState<TagData[]>([{ id: 1, tagNumber: 'Tag #', tagText: 'CUT NAME' }])
     const [isTopAligned, setIsTopAligned] = useState(false)
     const [hoveredCardId, setHoveredCardId] = useState<number | null>(null)
@@ -75,12 +77,14 @@ const PrintTags = () => {
                 {cards.map((card) => (
                     <div key={card.id} className="relative flex items-center print-tag-wrapper">
                         <div className="shrink-0 print-spacer" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
-                        <EditableTag
-                            tagNumber={card.tagNumber}
-                            tagText={card.tagText}
-                            onTagNumberChange={() => { }}
-                            onTagTextChange={() => { }}
-                        />
+                        <div className="print-tag-container">
+                            <EditableTag
+                                tagNumber={card.tagNumber}
+                                tagText={card.tagText}
+                                onTagNumberChange={() => { }}
+                                onTagTextChange={() => { }}
+                            />
+                        </div>
                         <div className="shrink-0 print-spacer" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
                     </div>
                 ))}
@@ -125,7 +129,7 @@ const PrintTags = () => {
                     >
                         <div
                             ref={contentRef}
-                            className="flex w-full flex-col"
+                            className="flex w-full flex-col items-center"
                             style={{ maxWidth: `${TAG_MAX_CONTAINER_WIDTH}px`, gap: `${TAG_GAP}px` }}
                         >
                             {tagElements()}
@@ -134,7 +138,8 @@ const PrintTags = () => {
                                 <button
                                     type="button"
                                     onClick={addCard}
-                                    className="flex h-20 w-full items-center justify-center border-2 border-dashed border-slate-400 bg-slate-100 text-slate-600 transition-all hover:border-slate-500 hover:bg-slate-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                                    className="flex h-20 items-center justify-center border-2 border-dashed border-slate-400 bg-slate-100 text-slate-600 transition-all hover:border-slate-500 hover:bg-slate-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                                    style={{ width: `${getTagDimensionsPx(settings.labelWidthInches, settings.labelHeightInches).width}px` }}
                                 >
                                     <span className="text-xl font-medium">+ Add Tag</span>
                                 </button>

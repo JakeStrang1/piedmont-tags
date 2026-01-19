@@ -23,17 +23,27 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
         const iframeWindow = iframe.contentWindow
         if (!iframeWindow) return
 
+        // Get all stylesheets from the main document to include Tailwind CSS
+        let stylesheets = ''
+        try {
+            // Try to get the compiled CSS file
+            const styleLinks = document.querySelectorAll('link[rel="stylesheet"]')
+            styleLinks.forEach((link) => {
+                const href = (link as HTMLLinkElement).href
+                if (href && !href.includes('bootstrap')) {
+                    stylesheets += `<link rel="stylesheet" href="${href}">\n`
+                }
+            })
+        } catch (e) {
+            console.warn('Could not access stylesheets:', e)
+        }
+
         const iframeContent = `
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8">
-                <link
-                    rel="stylesheet"
-                    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
-                    crossorigin="anonymous"
-                />
+                ${stylesheets}
                 <style type="text/css">
                     /* Screen styles */
                     html, body {
@@ -75,7 +85,7 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
                             position: relative !important;
                         }
                         
-                        /* Each tag wrapper should be one label */
+                        /* Each tag wrapper should be one label - set physical dimensions */
                         .print-tag-wrapper {
                             width: ${settings.labelWidthInches}in !important;
                             height: ${settings.labelHeightInches}in !important;
@@ -94,34 +104,48 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
                             height: 0 !important;
                         }
                         
-                        /* Tag container - configurable dimensions */
+                        /* Tag container - set physical dimensions, preserve all other styles from screen */
                         .print-tag-container {
                             width: ${settings.labelWidthInches}in !important;
                             height: ${settings.labelHeightInches}in !important;
                             aspect-ratio: ${settings.labelWidthInches}/${settings.labelHeightInches} !important;
-                            padding: ${settings.paddingInches}in !important;
-                            border: ${settings.borderWidthPoints}pt solid black !important;
+                            /* All other styles (padding, border, font, etc.) come from the on-screen classes */
                             margin: 0 !important;
                             box-shadow: none !important;
-                            background: white !important;
+                            /* Preserve flex layout */
                             display: flex !important;
                             flex-direction: column !important;
                             align-items: center !important;
                             justify-content: center !important;
+                            overflow: visible !important;
+                            position: relative !important;
                         }
                         
-                        /* Input/text styling for print */
-                        .print-tag-container input {
-                            font-size: ${settings.fontSizeInches}in !important;
-                            line-height: ${settings.lineHeight} !important;
-                            padding: ${settings.textPaddingVerticalInches}in ${settings.textPaddingHorizontalInches}in !important;
-                            margin: 0 !important;
-                            border: none !important;
-                            background: transparent !important;
-                            text-align: center !important;
+                        /* Make the EditableTag inside scale to fit the container */
+                        /* The EditableTag has fixed pixel dimensions, but we need it to fit the print container */
+                        .print-tag-container > div {
                             width: 100% !important;
-                            font-weight: 600 !important;
-                            color: black !important;
+                            height: 100% !important;
+                            max-width: 100% !important;
+                            max-height: 100% !important;
+                            box-sizing: border-box !important;
+                            /* Override any fixed pixel dimensions from inline styles */
+                            min-width: 0 !important;
+                            min-height: 0 !important;
+                        }
+                        
+                        /* Override inline style attributes for print */
+                        .print-tag-container > div[style*="width"] {
+                            width: 100% !important;
+                        }
+                        .print-tag-container > div[style*="height"] {
+                            height: 100% !important;
+                        }
+                        
+                        /* Ensure all child elements also scale */
+                        .print-tag-container > div > * {
+                            max-width: 100% !important;
+                            max-height: 100% !important;
                         }
                         
                         /* Remove br tags spacing in print */
@@ -129,15 +153,17 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
                             display: none !important;
                         }
                         
-                        /* Flex container for tag content */
-                        .print-tag-container > div {
-                            display: flex !important;
-                            flex-direction: column !important;
-                            align-items: center !important;
-                            justify-content: center !important;
-                            gap: ${settings.textGapInches}in !important;
+                        /* Ensure inputs maintain their on-screen styling, just remove interactive states */
+                        .print-tag-container input {
+                            /* Font size, line height, padding all come from on-screen classes */
+                            margin: 0 !important;
+                            border: none !important;
+                            background: transparent !important;
+                            /* Preserve text alignment and styling */
+                            text-align: center !important;
                             width: 100% !important;
-                            height: 100% !important;
+                            /* Remove hover/focus states for print */
+                            transition: none !important;
                         }
                     }
                 </style>
