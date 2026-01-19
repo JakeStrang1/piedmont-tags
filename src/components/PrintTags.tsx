@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ReactDOM from 'react-dom/client'
+import React from 'react'
 import WrappedTag from './WrappedTag'
-import EditableTag from './EditableTag'
-import Printable from './Printable'
-import PrintSettings from './PrintSettings'
-import { PRINTABLE_WIDTH, TAG_MAX_CONTAINER_WIDTH, TAG_WRAPPER_WIDTH, TAG_GAP, getTagDimensionsPx } from './tagConstants'
-import { usePrintSettings } from '../hooks/usePrintSettings'
-import PrintTagContent from './PrintTagContent'
+import TagSettings from './TagSettings'
+import { TAG_MAX_CONTAINER_WIDTH, TAG_WRAPPER_WIDTH, TAG_GAP, getTagDimensionsPx } from './tagConstants'
+import { useTagSettings, TagSettingsProvider } from '../hooks/useTagSettings'
+import { getStylesheets } from '../utilities/getStylesheets'
 
 interface TagData {
     id: number
@@ -16,13 +16,12 @@ interface TagData {
 
 const PrintTags = () => {
     const navigate = useNavigate()
-    const { settings } = usePrintSettings()
+    const { settings } = useTagSettings()
     const [cards, setCards] = useState<TagData[]>([{ id: 1, tagNumber: 'Tag #', tagText: 'CUT NAME' }])
     const [isTopAligned, setIsTopAligned] = useState(false)
     const [hoveredCardId, setHoveredCardId] = useState<number | null>(null)
-    const [printFn, setPrintFn] = useState<(() => void) | null>(null)
-    const [showPreview, setShowPreview] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
+    const [showPreview, setShowPreview] = useState(false)
     const contentRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
 
@@ -53,7 +52,7 @@ const PrintTags = () => {
         setCards(cards.map((card) => (card.id === id ? { ...card, tagNumber, tagText } : card)))
     }
 
-    const tagElements = () => {
+    const tagElements = useCallback((printable: boolean = false) => {
         return cards.map((card) => (
             <WrappedTag
                 key={card.id}
@@ -65,48 +64,112 @@ const PrintTags = () => {
                 onDelete={() => deleteCard(card.id)}
                 onTagNumberChange={(value) => updateTag(card.id, value, card.tagText)}
                 onTagTextChange={(value) => updateTag(card.id, card.tagNumber, value)}
+                printable={printable}
             />
         ))
-    }
+    }, [cards, hoveredCardId])
 
-    const printableTagElements = () => {
-        return (
-            <div
-                className="flex w-full flex-col"
-                style={{ maxWidth: `${TAG_MAX_CONTAINER_WIDTH}px`, gap: `${TAG_GAP}px` }}
-            >
-                {cards.map((card) => (
-                    <div key={card.id} className="relative flex items-center print-tag-wrapper">
-                        <div className="shrink-0 print-spacer" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
-                        <div className="print-tag-container">
-                            <EditableTag
-                                tagNumber={card.tagNumber}
-                                tagText={card.tagText}
-                                onTagNumberChange={() => { }}
-                                onTagTextChange={() => { }}
-                            />
-                        </div>
-                        <div className="shrink-0 print-spacer" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
-                    </div>
-                ))}
-            </div>
-        )
-    }
+    const printIframeRef = useRef<HTMLIFrameElement | null>(null)
+    const printRootRef = useRef<ReactDOM.Root | null>(null)
 
-    // Memoize printData to prevent unnecessary re-renders
-    const printData = useMemo(() => ({
-        PrintTagContent,
-        cards,
-    }), [cards])
+    // Keep iframe content in sync with tags
+    useEffect(() => {
+        const iframe = printIframeRef.current
+        if (!iframe) return
+
+        const iframeDoc = iframe.contentDocument
+        if (!iframeDoc) return
+
+        // Get all stylesheets from the main document
+        const stylesheets = getStylesheets()
+
+        // Recreate entire iframe HTML structure
+        iframeDoc.open()
+        iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Print Tags</title>
+                ${stylesheets}
+                <style>
+                    @page {
+                        size: ${settings.labelWidthInches}in ${settings.labelHeightInches}in;
+                        margin: 0;
+                    }
+                    
+                    /* Ensure all elements are visible when printing */
+                    @media print {
+                        * {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div id="print-root"></div>
+            </body>
+            </html>
+        `)
+        iframeDoc.close()
+
+        // Render React components into the iframe
+        const rootElement = iframeDoc.getElementById('print-root')
+        if (rootElement) {
+            // Clean up previous root in cleanup function, not here
+            const previousRoot = printRootRef.current
+            const root = ReactDOM.createRoot(rootElement)
+            printRootRef.current = root
+
+            root.render(
+                <React.StrictMode>
+                    <TagSettingsProvider>
+                        {tagElements(true)}
+                    </TagSettingsProvider>
+                </React.StrictMode>
+            )
+
+            // Cleanup function to unmount when dependencies change or component unmounts
+            return () => {
+                if (previousRoot) {
+                    setTimeout(() => {
+                        previousRoot.unmount()
+                    }, 0)
+                }
+            }
+        }
+    }, [cards, settings, tagElements])
+
+    const handlePrint = () => {
+        const iframe = printIframeRef.current
+        if (!iframe) return
+
+        const iframeWindow = iframe.contentWindow
+        if (!iframeWindow) return
+
+        iframeWindow.focus()
+        iframeWindow.print()
+    }
 
     return (
         <>
-            <Printable
-                PrintComponent={printableTagElements()}
-                widthPx={PRINTABLE_WIDTH}
-                show={showPreview}
-                onPrintReady={(fn) => setPrintFn(() => fn)}
-                printData={printData}
+            <iframe
+                ref={printIframeRef}
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: showPreview ? `${getTagDimensionsPx(settings.labelWidthInches, settings.labelHeightInches).width}px` : 0,
+                    height: showPreview ? '600px' : 0,
+                    margin: 0,
+                    padding: 0,
+                    border: 'none',
+                    zIndex: 9999,
+                    backgroundColor: 'green',
+                    overflow: 'auto',
+                }}
+                title="print"
             />
             <div className="min-h-screen w-full bg-slate-100">
                 <div className="flex h-screen w-full flex-col border border-slate-200 bg-slate-50 shadow-2xl">
@@ -140,7 +203,7 @@ const PrintTags = () => {
                             className="flex w-full flex-col items-center"
                             style={{ maxWidth: `${TAG_MAX_CONTAINER_WIDTH}px`, gap: `${TAG_GAP}px` }}
                         >
-                            {tagElements()}
+                            {tagElements(false)}
                             <div className="flex items-center">
                                 <div className="shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
                                 <button
@@ -157,13 +220,13 @@ const PrintTags = () => {
                     </div>
                 </div>
             </div>
-            <PrintSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
+            <TagSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
             <div className="fixed bottom-12 right-12 flex flex-col gap-3">
                 <button
                     type="button"
                     onClick={() => setShowSettings(true)}
                     className="flex items-center gap-2 rounded-xl bg-slate-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-slate-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
-                    aria-label="Print settings"
+                    aria-label="Settings"
                 >
                     <svg
                         className="h-6 w-6"
@@ -189,7 +252,7 @@ const PrintTags = () => {
                         ? 'bg-green-600/80 hover:bg-green-700/90 focus-visible:outline-green-500'
                         : 'bg-slate-600/80 hover:bg-slate-700/90 focus-visible:outline-slate-500'
                         }`}
-                    aria-label="Toggle preview"
+                    aria-label="Preview"
                 >
                     <svg
                         className="h-6 w-6"
@@ -212,30 +275,28 @@ const PrintTags = () => {
                     </svg>
                     <span className="text-lg font-semibold">Preview</span>
                 </button>
-                {printFn && (
-                    <button
-                        type="button"
-                        onClick={() => printFn()}
-                        className="flex items-center gap-2 rounded-xl bg-blue-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-blue-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                        aria-label="Print tags"
+                <button
+                    type="button"
+                    onClick={handlePrint}
+                    className="flex items-center gap-2 rounded-xl bg-blue-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-blue-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                    aria-label="Print"
+                >
+                    <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
                     >
-                        <svg
-                            className="h-6 w-6"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
-                        <span className="text-lg font-semibold">Print</span>
-                    </button>
-                )}
+                        <path
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                    <span className="text-lg font-semibold">Print</span>
+                </button>
             </div>
         </>
     )

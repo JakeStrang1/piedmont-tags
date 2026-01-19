@@ -10,6 +10,7 @@ interface WrappedTagProps {
     onDelete: () => void
     onTagNumberChange: (value: string) => void
     onTagTextChange: (value: string) => void
+    printable?: boolean
 }
 
 const WrappedTag = ({
@@ -21,7 +22,25 @@ const WrappedTag = ({
     onDelete,
     onTagNumberChange,
     onTagTextChange,
+    printable = false,
 }: WrappedTagProps) => {
+
+    function tagContent() {
+        return (
+            <EditableTag
+                tagNumber={tagNumber}
+                tagText={tagText}
+                onTagNumberChange={onTagNumberChange}
+                onTagTextChange={onTagTextChange}
+                printable={printable}
+            />
+        )
+    }
+
+    if (printable) {
+        return tagContent()
+    }
+
     return (
         <div
             className="relative flex items-center"
@@ -29,14 +48,9 @@ const WrappedTag = ({
             onMouseLeave={onMouseLeave}
         >
             <div className="shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
-            <EditableTag
-                tagNumber={tagNumber}
-                tagText={tagText}
-                onTagNumberChange={onTagNumberChange}
-                onTagTextChange={onTagTextChange}
-            />
+            {tagContent()}
             <div className="relative shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }}>
-                {isHovered && (
+                {isHovered && !printable && (
                     <button
                         type="button"
                         onClick={onDelete}

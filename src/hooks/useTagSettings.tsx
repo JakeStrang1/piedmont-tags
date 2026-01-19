@@ -1,27 +1,27 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 
-export interface PrintSettings {
+export interface TagSettings {
     labelWidthInches: number
     labelHeightInches: number
 }
 
-const DEFAULT_SETTINGS: PrintSettings = {
+const DEFAULT_SETTINGS: TagSettings = {
     labelWidthInches: 2,
     labelHeightInches: 3,
 }
 
-const STORAGE_KEY = 'printSettings'
+const STORAGE_KEY = 'tagSettings'
 
-interface PrintSettingsContextType {
-    settings: PrintSettings
-    updateSettings: (updates: Partial<PrintSettings>) => void
+interface TagSettingsContextType {
+    settings: TagSettings
+    updateSettings: (updates: Partial<TagSettings>) => void
     resetToDefaults: () => void
 }
 
-const PrintSettingsContext = createContext<PrintSettingsContextType | undefined>(undefined)
+const TagSettingsContext = createContext<TagSettingsContextType | undefined>(undefined)
 
-export const PrintSettingsProvider = ({ children }: { children: ReactNode }) => {
-    const [settings, setSettings] = useState<PrintSettings>(() => {
+export const TagSettingsProvider = ({ children }: { children: ReactNode }) => {
+    const [settings, setSettings] = useState<TagSettings>(() => {
         // Load from localStorage on init
         const stored = localStorage.getItem(STORAGE_KEY)
         if (stored) {
@@ -41,7 +41,7 @@ export const PrintSettingsProvider = ({ children }: { children: ReactNode }) => 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     }, [settings])
 
-    const updateSettings = (updates: Partial<PrintSettings>) => {
+    const updateSettings = (updates: Partial<TagSettings>) => {
         setSettings((prev) => ({ ...prev, ...updates }))
     }
 
@@ -50,16 +50,16 @@ export const PrintSettingsProvider = ({ children }: { children: ReactNode }) => 
     }
 
     return (
-        <PrintSettingsContext.Provider value={{ settings, updateSettings, resetToDefaults }}>
+        <TagSettingsContext.Provider value={{ settings, updateSettings, resetToDefaults }}>
             {children}
-        </PrintSettingsContext.Provider>
+        </TagSettingsContext.Provider>
     )
 }
 
-export const usePrintSettings = () => {
-    const context = useContext(PrintSettingsContext)
+export const useTagSettings = () => {
+    const context = useContext(TagSettingsContext)
     if (context === undefined) {
-        throw new Error('usePrintSettings must be used within a PrintSettingsProvider')
+        throw new Error('useTagSettings must be used within a TagSettingsProvider')
     }
     return context
 }

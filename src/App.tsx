@@ -1,15 +1,15 @@
 import { Route, Routes } from 'react-router-dom'
-import { PrintSettingsProvider } from './hooks/usePrintSettings'
+import { TagSettingsProvider } from './hooks/useTagSettings'
 import MainMenu from './components/MainMenu'
 import PrintTags from './components/PrintTags'
 
 const App = () => (
-  <PrintSettingsProvider>
+  <TagSettingsProvider>
     <Routes>
       <Route path="/" element={<MainMenu />} />
       <Route path="/print" element={<PrintTags />} />
     </Routes>
-  </PrintSettingsProvider>
+  </TagSettingsProvider>
 )
 
 export default App
