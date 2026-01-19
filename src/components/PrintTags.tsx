@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client'
 import React from 'react'
 import WrappedTag from './WrappedTag'
 import TagSettings from './TagSettings'
-import { TAG_MAX_CONTAINER_WIDTH, TAG_WRAPPER_WIDTH, TAG_GAP, getTagDimensionsPx } from './tagConstants'
+import { TAG_MAX_CONTAINER_WIDTH, TAG_GAP } from './tagConstants'
 import { useTagSettings, TagSettingsProvider } from '../hooks/useTagSettings'
 import { getStylesheets } from '../utilities/getStylesheets'
 
@@ -44,16 +44,16 @@ const PrintTags = () => {
         setCards([...cards, { id: Date.now(), tagNumber: 'Tag #', tagText: 'CUT NAME' }])
     }
 
-    const deleteCard = (id: number) => {
-        setCards(cards.filter((card) => card.id !== id))
-    }
+    const deleteCard = useCallback((id: number) => {
+        setCards((prevCards) => prevCards.filter((card) => card.id !== id))
+    }, [])
 
-    const updateTag = (id: number, tagNumber: string, tagText: string) => {
-        setCards(cards.map((card) => (card.id === id ? { ...card, tagNumber, tagText } : card)))
-    }
+    const updateTag = useCallback((id: number, tagNumber: string, tagText: string) => {
+        setCards((prevCards) => prevCards.map((card) => (card.id === id ? { ...card, tagNumber, tagText } : card)))
+    }, [])
 
     const tagElements = useCallback((printable: boolean = false) => {
-        return cards.map((card) => (
+        return cards.map((card, index) => (
             <WrappedTag
                 key={card.id}
                 tagNumber={card.tagNumber}
@@ -65,9 +65,10 @@ const PrintTags = () => {
                 onTagNumberChange={(value) => updateTag(card.id, value, card.tagText)}
                 onTagTextChange={(value) => updateTag(card.id, card.tagNumber, value)}
                 printable={printable}
+                colorIndex={index}
             />
         ))
-    }, [cards, hoveredCardId])
+    }, [cards, hoveredCardId, deleteCard, updateTag])
 
     const printIframeRef = useRef<HTMLIFrameElement | null>(null)
     const printRootRef = useRef<ReactDOM.Root | null>(null)
@@ -161,7 +162,7 @@ const PrintTags = () => {
                     top: 0,
                     left: 0,
                     width: showPreview ? `${settings.labelWidthInches}in` : 0,
-                    height: showPreview ? '600px' : 0,
+                    height: showPreview ? `${settings.labelHeightInches}in` : 0,
                     margin: 0,
                     padding: 0,
                     border: 'none',
@@ -204,17 +205,19 @@ const PrintTags = () => {
                             style={{ maxWidth: `${TAG_MAX_CONTAINER_WIDTH}px`, gap: `${TAG_GAP}px` }}
                         >
                             {tagElements(false)}
-                            <div className="flex items-center">
-                                <div className="shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
+                            <div className="flex items-center" style={{ width: `${(settings.labelWidthInches * settings.scale) + (2 * 1.5)}in` }}>
+                                <div className="shrink-0" style={{ width: `1.5in` }} />
                                 <button
                                     type="button"
                                     onClick={addCard}
                                     className="flex h-20 items-center justify-center border-2 border-dashed border-slate-400 bg-slate-100 text-slate-600 transition-all hover:border-slate-500 hover:bg-slate-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                                    style={{ width: `${settings.labelWidthInches}in` }}
+                                    style={{
+                                        width: `${settings.labelWidthInches * settings.scale}in`,
+                                    }}
                                 >
                                     <span className="text-xl font-medium">+ Add Tag</span>
                                 </button>
-                                <div className="shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
+                                <div className="shrink-0" style={{ width: `1.5in` }} />
                             </div>
                         </div>
                     </div>

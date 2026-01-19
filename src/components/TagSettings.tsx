@@ -81,7 +81,7 @@ const HelpTooltip = ({ description }: HelpTooltipProps) => {
 }
 
 const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
-    const { settings, updateSettings, resetToDefaults } = useTagSettings()
+    const { settings, updateSettings } = useTagSettings()
     const [localSettings, setLocalSettings] = useState(settings)
 
     // Update local settings when modal opens or settings change
@@ -91,7 +91,7 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
         }
     }, [settings, isOpen])
 
-    const handleChange = (key: keyof typeof settings, value: number) => {
+    const handleChange = (key: keyof typeof settings, value: number | boolean) => {
         setLocalSettings((prev) => ({ ...prev, [key]: value }))
     }
 
@@ -108,8 +108,10 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
     const handleReset = () => {
         // Reset local form to defaults without saving
         const defaultValues: TagSettings = {
-            labelWidthInches: 2,
-            labelHeightInches: 3,
+            labelWidthInches: 3,
+            labelHeightInches: 2,
+            scale: 1.5,
+            showPrintCorners: false,
         }
         setLocalSettings(defaultValues)
     }
@@ -152,7 +154,7 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
                                 <div>
                                     <label className="mb-1 flex items-center text-sm font-medium text-slate-700">
                                         Width (inches)
-                                        <HelpTooltip description="The width of the label in inches. This controls the on-screen tag width, scaled by 200 pixels per inch." />
+                                        <HelpTooltip description="The width of the label in inches. This controls the print preview tag width. The on-screen tag width will be multiplied by the scale factor." />
                                     </label>
                                     <input
                                         type="number"
@@ -168,7 +170,7 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
                                 <div>
                                     <label className="mb-1 flex items-center text-sm font-medium text-slate-700">
                                         Height (inches)
-                                        <HelpTooltip description="The height of the label in inches. This controls the on-screen tag height, scaled by 200 pixels per inch." />
+                                        <HelpTooltip description="The height of the label in inches. This controls the print preview tag height. The on-screen tag height will be multiplied by the scale factor." />
                                     </label>
                                     <input
                                         type="number"
@@ -181,6 +183,51 @@ const TagSettings = ({ isOpen, onClose }: TagSettingsProps) => {
                                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                     />
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Scale */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700">
+                                Display
+                            </h3>
+                            <div>
+                                <label className="mb-1 flex items-center text-sm font-medium text-slate-700">
+                                    Scale
+                                    <HelpTooltip description="Scales the on-screen tag display. Does not affect print preview or actual print output. For example, a scale of 2 makes on-screen tags appear twice as large." />
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0.1"
+                                    value={localSettings.scale}
+                                    onChange={(e) =>
+                                        handleChange('scale', parseFloat(e.target.value) || 1)
+                                    }
+                                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Print Corners */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700">
+                                Print Features
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="showPrintCorners"
+                                    checked={localSettings.showPrintCorners}
+                                    onChange={(e) =>
+                                        handleChange('showPrintCorners', e.target.checked)
+                                    }
+                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                                />
+                                <label htmlFor="showPrintCorners" className="flex items-center text-sm font-medium text-slate-700">
+                                    Show Print Corners
+                                    <HelpTooltip description="When enabled, displays color-coded checkerboard corners on each tag for print alignment. Each tag uses a different color that rotates through 5 colors." />
+                                </label>
                             </div>
                         </div>
                     </div>

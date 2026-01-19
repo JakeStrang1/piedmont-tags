@@ -3,11 +3,15 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 export interface TagSettings {
     labelWidthInches: number
     labelHeightInches: number
+    scale: number
+    showPrintCorners: boolean
 }
 
 const DEFAULT_SETTINGS: TagSettings = {
-    labelWidthInches: 2,
-    labelHeightInches: 3,
+    labelWidthInches: 3,
+    labelHeightInches: 2,
+    scale: 1.5,
+    showPrintCorners: false,
 }
 
 const STORAGE_KEY = 'tagSettings'
@@ -28,7 +32,16 @@ export const TagSettingsProvider = ({ children }: { children: ReactNode }) => {
             try {
                 const parsed = JSON.parse(stored)
                 // Merge with defaults to handle missing properties
-                return { ...DEFAULT_SETTINGS, ...parsed }
+                // Ensure scale defaults to 1 if missing or invalid
+                const loaded = { ...DEFAULT_SETTINGS, ...parsed }
+                if (!loaded.scale || typeof loaded.scale !== 'number' || loaded.scale <= 0) {
+                    loaded.scale = 1
+                }
+                // Ensure showPrintCorners defaults to false if missing or invalid
+                if (typeof loaded.showPrintCorners !== 'boolean') {
+                    loaded.showPrintCorners = false
+                }
+                return loaded
             } catch {
                 return DEFAULT_SETTINGS
             }

@@ -1,5 +1,5 @@
 import EditableTag from './EditableTag'
-import { TAG_WRAPPER_WIDTH } from './tagConstants'
+import { useTagSettings } from '../hooks/useTagSettings'
 
 interface WrappedTagProps {
     tagNumber: string
@@ -11,6 +11,7 @@ interface WrappedTagProps {
     onTagNumberChange: (value: string) => void
     onTagTextChange: (value: string) => void
     printable?: boolean
+    colorIndex?: number
 }
 
 const WrappedTag = ({
@@ -23,7 +24,9 @@ const WrappedTag = ({
     onTagNumberChange,
     onTagTextChange,
     printable = false,
+    colorIndex = 0,
 }: WrappedTagProps) => {
+    const { settings } = useTagSettings()
 
     function tagContent() {
         return (
@@ -33,6 +36,7 @@ const WrappedTag = ({
                 onTagNumberChange={onTagNumberChange}
                 onTagTextChange={onTagTextChange}
                 printable={printable}
+                colorIndex={colorIndex}
             />
         )
     }
@@ -41,15 +45,32 @@ const WrappedTag = ({
         return tagContent()
     }
 
+    // Calculate the visual width of the tag (base width * scale)
+    // The wrapper width should be: visual tag width + fixed spacers on both sides
+    const visualTagWidth = settings.labelWidthInches * settings.scale
+    const visualTagHeight = settings.labelHeightInches * settings.scale
+    const spacerWidthInches = 1.5
+    const wrapperWidth = visualTagWidth + (2 * spacerWidthInches)
+
     return (
         <div
             className="relative flex items-center"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            style={{
+                width: `${wrapperWidth}in`,
+            }}
         >
-            <div className="shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }} />
-            {tagContent()}
-            <div className="relative shrink-0" style={{ width: `${TAG_WRAPPER_WIDTH}px` }}>
+            <div className="shrink-0" style={{ width: `${spacerWidthInches}in` }} />
+            <div className="flex justify-center items-center" style={{ width: `${visualTagWidth}in`, height: `${visualTagHeight}in` }}>
+                {tagContent()}
+            </div>
+            <div
+                className="relative shrink-0"
+                style={{
+                    width: `${spacerWidthInches}in`,
+                }}
+            >
                 {isHovered && !printable && (
                     <button
                         type="button"
