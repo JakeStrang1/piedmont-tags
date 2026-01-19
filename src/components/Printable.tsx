@@ -1,5 +1,11 @@
-import React, { useEffect, useCallback } from 'react'
-import { usePrintSettings } from '../hooks/usePrintSettings'
+import React, { useEffect, useCallback, useRef } from 'react'
+import ReactDOM from 'react-dom/client'
+import { usePrintSettings, type PrintSettings } from '../hooks/usePrintSettings'
+
+interface PrintData {
+    PrintTagContent: React.ComponentType<{ cards: Array<{ id: number; tagNumber: string; tagText: string }>; settings: PrintSettings }>
+    cards: Array<{ id: number; tagNumber: string; tagText: string }>
+}
 
 interface PrintableProps {
     key?: string
@@ -7,26 +13,29 @@ interface PrintableProps {
     widthPx: number
     show: boolean
     onPrintReady?: (printFn: () => void) => void
+    printData?: PrintData // Data needed for React rendering in iframe
 }
 
-const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: PrintableProps) => {
+const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady, printData }: PrintableProps) => {
     const { settings } = usePrintSettings()
     const keyValue = key ?? 'default'
     const previewId = `preview-${keyValue}`
     const iframeId = `ifmcontentstoprint-${keyValue}`
+    const iframeRootRef = useRef<ReactDOM.Root | null>(null)
+    const previewRootRef = useRef<ReactDOM.Root | null>(null)
+    const prevDataRef = useRef<{ cards: Array<{ id: number; tagNumber: string; tagText: string }>; settings: PrintSettings } | null>(null)
 
     const print = useCallback(() => {
-        const content = document.getElementById(previewId)
         const iframe = document.getElementById(iframeId) as HTMLIFrameElement | null
-        if (!iframe || !content) return
+        if (!iframe) return
 
         const iframeWindow = iframe.contentWindow
-        if (!iframeWindow) return
+        const iframeDoc = iframe.contentDocument
+        if (!iframeWindow || !iframeDoc) return
 
         // Get all stylesheets from the main document to include Tailwind CSS
         let stylesheets = ''
         try {
-            // Try to get the compiled CSS file
             const styleLinks = document.querySelectorAll('link[rel="stylesheet"]')
             styleLinks.forEach((link) => {
                 const href = (link as HTMLLinkElement).href
@@ -38,7 +47,9 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
             console.warn('Could not access stylesheets:', e)
         }
 
-        const iframeContent = `
+        // Set up iframe document structure
+        iframeDoc.open()
+        iframeDoc.write(`
             <!DOCTYPE html>
             <html>
             <head>
@@ -169,18 +180,128 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
                 </style>
             </head>
             <body>
-                ${content.innerHTML}
+                <div id="print-root"></div>
             </body>
             </html>
-        `
+        `)
+        iframeDoc.close()
 
-        iframeWindow.document.documentElement.innerHTML = iframeContent
-        setTimeout(() => {
-            iframeWindow.focus()
-            iframeWindow.print()
-        }, 1000) // Without a high enough delay the iframe didn't seem to have the proper css when printing (probably there's a better way)
+        // Render React component into iframe
+        if (printData && printData.PrintTagContent && printData.cards) {
+            const rootElement = iframeDoc.getElementById('print-root')
+            if (rootElement) {
+                // Clean up previous root if it exists
+                if (iframeRootRef.current) {
+                    iframeRootRef.current.unmount()
+                }
 
-    }, [previewId, iframeId, widthPx, settings])
+                // Create new React root and render
+                const root = ReactDOM.createRoot(rootElement)
+                iframeRootRef.current = root
+
+                const PrintTagContent = printData.PrintTagContent
+                root.render(
+                    React.createElement(PrintTagContent, {
+                        cards: printData.cards,
+                        settings: settings,
+                    })
+                )
+
+                // Wait for React to render, then print
+                setTimeout(() => {
+                    iframeWindow.focus()
+                    iframeWindow.print()
+                }, 1500) // Give React time to render
+            }
+        } else {
+            // Fallback to HTML copy method if React rendering data not available
+            const content = document.getElementById(previewId)
+            if (content) {
+                const rootElement = iframeDoc.getElementById('print-root')
+                if (rootElement) {
+                    rootElement.innerHTML = content.innerHTML
+                }
+            }
+            setTimeout(() => {
+                iframeWindow.focus()
+                iframeWindow.print()
+            }, 1000)
+        }
+
+    }, [previewId, iframeId, widthPx, settings, printData])
+
+    // Render preview using the same component that will be printed
+    useEffect(() => {
+        if (!show) {
+            // Clean up when preview is hidden
+            if (previewRootRef.current) {
+                previewRootRef.current.unmount()
+                previewRootRef.current = null
+            }
+            prevDataRef.current = null
+            return
+        }
+
+        const previewElement = document.getElementById(previewId)
+        if (!previewElement) return
+
+        if (printData && printData.PrintTagContent && printData.cards) {
+            // Check if data actually changed
+            const currentData = { cards: printData.cards, settings }
+            const prevData = prevDataRef.current
+            const dataChanged = !prevData ||
+                prevData.cards.length !== currentData.cards.length ||
+                prevData.settings.labelWidthInches !== currentData.settings.labelWidthInches ||
+                prevData.settings.labelHeightInches !== currentData.settings.labelHeightInches ||
+                prevData.cards.some((card, i) =>
+                    !currentData.cards[i] ||
+                    card.id !== currentData.cards[i].id ||
+                    card.tagNumber !== currentData.cards[i].tagNumber ||
+                    card.tagText !== currentData.cards[i].tagText
+                )
+
+            // Only create new root if we don't have one
+            if (!previewRootRef.current) {
+                // Create a React root for the preview
+                const previewRoot = ReactDOM.createRoot(previewElement)
+                previewRootRef.current = previewRoot
+            }
+
+            // Only update if data changed
+            if (dataChanged) {
+                const PrintTagContent = printData.PrintTagContent
+
+                // Update the rendered content (React 18 root.render can be called multiple times)
+                if (previewRootRef.current) {
+                    previewRootRef.current.render(
+                        React.createElement(PrintTagContent, {
+                            cards: printData.cards,
+                            settings: settings,
+                        })
+                    )
+                }
+
+                prevDataRef.current = currentData
+            }
+
+            // Cleanup on unmount
+            return () => {
+                if (previewRootRef.current) {
+                    previewRootRef.current.unmount()
+                    previewRootRef.current = null
+                }
+                prevDataRef.current = null
+            }
+        } else if (PrintComponent) {
+            // Fallback to original PrintComponent if React rendering not available
+            if (previewRootRef.current) {
+                previewRootRef.current.unmount()
+            }
+            const fallbackRoot = ReactDOM.createRoot(previewElement)
+            previewRootRef.current = fallbackRoot
+            fallbackRoot.render(PrintComponent as React.ReactElement)
+        }
+    }, [previewId, show, printData, settings, PrintComponent])
 
     useEffect(() => {
         onPrintReady?.(print)
@@ -189,9 +310,17 @@ const Printable = ({ key, PrintComponent, widthPx, show, onPrintReady }: Printab
     return (
         <>
             <iframe id={iframeId} style={{ height: "0px", width: "0px", position: "absolute" }}></iframe>
-            <div id={previewId} className="toPrint" style={{ backgroundColor: "green", width: `${widthPx}px`, position: "absolute", top: 0, left: `${show ? "0px" : "-3000px"}` }}>
-                {PrintComponent}
-            </div>
+            <div
+                id={previewId}
+                className="toPrint z-[9999]"
+                style={{
+                    backgroundColor: "green",
+                    width: `${widthPx}px`,
+                    position: "absolute",
+                    top: 0,
+                    left: `${show ? "0px" : "-3000px"}`
+                }}
+            />
         </>
     )
 }

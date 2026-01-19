@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import WrappedTag from './WrappedTag'
 import EditableTag from './EditableTag'
@@ -6,6 +6,7 @@ import Printable from './Printable'
 import PrintSettings from './PrintSettings'
 import { PRINTABLE_WIDTH, TAG_MAX_CONTAINER_WIDTH, TAG_WRAPPER_WIDTH, TAG_GAP, getTagDimensionsPx } from './tagConstants'
 import { usePrintSettings } from '../hooks/usePrintSettings'
+import PrintTagContent from './PrintTagContent'
 
 interface TagData {
     id: number
@@ -92,6 +93,12 @@ const PrintTags = () => {
         )
     }
 
+    // Memoize printData to prevent unnecessary re-renders
+    const printData = useMemo(() => ({
+        PrintTagContent,
+        cards,
+    }), [cards])
+
     return (
         <>
             <Printable
@@ -99,6 +106,7 @@ const PrintTags = () => {
                 widthPx={PRINTABLE_WIDTH}
                 show={showPreview}
                 onPrintReady={(fn) => setPrintFn(() => fn)}
+                printData={printData}
             />
             <div className="min-h-screen w-full bg-slate-100">
                 <div className="flex h-screen w-full flex-col border border-slate-200 bg-slate-50 shadow-2xl">
