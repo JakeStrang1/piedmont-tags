@@ -4,26 +4,32 @@ import ReactDOM from 'react-dom/client'
 import React from 'react'
 import WrappedTag from './WrappedTag'
 import TagSettings from './TagSettings'
+import TagEditor from './TagEditor'
 import { TAG_MAX_CONTAINER_WIDTH, TAG_GAP } from './tagConstants'
 import { useTagSettings, TagSettingsProvider } from '../hooks/useTagSettings'
 import { getStylesheets } from '../utilities/getStylesheets'
 
 interface TagData {
-    id: number
+    index: number
     tagNumber: string
-    tagText: string
+    cutName: string
+    numberOfTags: number
 }
 
 const PrintTags = () => {
     const navigate = useNavigate()
     const { settings } = useTagSettings()
-    const [cards, setCards] = useState<TagData[]>([{ id: 1, tagNumber: 'Tag #', tagText: 'CUT NAME' }])
+    const [tags, setTags] = useState<TagData[]>([])
     const [isTopAligned, setIsTopAligned] = useState(false)
-    const [hoveredCardId, setHoveredCardId] = useState<number | null>(null)
+    const [hoveredCardKey, setHoveredCardKey] = useState<string | null>(null)
     const [showSettings, setShowSettings] = useState(false)
     const [showPreview, setShowPreview] = useState(false)
     const contentRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        console.log('tags:', tags)
+    }, [tags])
 
     useEffect(() => {
         const checkLayout = () => {
@@ -38,37 +44,95 @@ const PrintTags = () => {
         checkLayout()
         window.addEventListener('resize', checkLayout)
         return () => window.removeEventListener('resize', checkLayout)
-    }, [cards])
+    }, [tags])
 
     const addCard = () => {
-        setCards([...cards, { id: Date.now(), tagNumber: 'Tag #', tagText: 'CUT NAME' }])
+        setTags((prev) => {
+            const nextIndex =
+                prev.length === 0 ? 1 : Math.max(...prev.map((c) => c.index)) + 1
+            return [
+                ...prev,
+                { index: nextIndex, tagNumber: 'Tag #', cutName: 'CUT NAME', numberOfTags: 1 },
+            ]
+        })
     }
 
-    const deleteCard = useCallback((id: number) => {
-        setCards((prevCards) => prevCards.filter((card) => card.id !== id))
+    const deleteCard = useCallback((index: number) => {
+        setTags((prevTags) => prevTags.filter((tag) => tag.index !== index))
     }, [])
 
-    const updateTag = useCallback((id: number, tagNumber: string, tagText: string) => {
-        setCards((prevCards) => prevCards.map((card) => (card.id === id ? { ...card, tagNumber, tagText } : card)))
+    const updateTag = useCallback((index: number, tagNumber: string, cutName: string) => {
+        setTags((prevTags) =>
+            prevTags.map((tag) =>
+                tag.index === index ? { ...tag, tagNumber, cutName } : tag
+            )
+        )
+    }, [])
+
+    const expandedCards = useCallback(() => {
+        const sorted = [...tags].sort((a, b) => a.index - b.index)
+        const out: Array<{
+            key: string
+            baseIndex: number
+            tagNumber: string
+            cutName: string
+            displayIndex: number
+            instanceIndex: number
+        }> = []
+
+        let displayIndex = 0
+        for (const card of sorted) {
+            const count = Math.max(1, Math.floor(card.numberOfTags || 1))
+            for (let i = 1; i <= count; i++) {
+                out.push({
+                    key: `${card.index}-${i}`,
+                    baseIndex: card.index,
+                    tagNumber: card.tagNumber,
+                    cutName: card.cutName,
+                    displayIndex,
+                    instanceIndex: i,
+                })
+                displayIndex++
+            }
+        }
+        return out
+    }, [tags])
+
+    const scrollPreviewToTagIndex = useCallback((tagIndex: number) => {
+        const container = containerRef.current
+        if (!container) return
+
+        const el = container.querySelector(
+            `[data-tag-index="${tagIndex}"]`
+        ) as HTMLElement | null
+
+        if (!el) return
+
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const top = elRect.top - containerRect.top + container.scrollTop
+
+        container.scrollTo({ top, behavior: 'smooth' })
     }, [])
 
     const tagElements = useCallback((printable: boolean = false) => {
-        return cards.map((card, index) => (
+        return expandedCards().map((card) => (
             <WrappedTag
-                key={card.id}
+                key={card.key}
                 tagNumber={card.tagNumber}
-                tagText={card.tagText}
-                isHovered={hoveredCardId === card.id}
-                onMouseEnter={() => setHoveredCardId(card.id)}
-                onMouseLeave={() => setHoveredCardId(null)}
-                onDelete={() => deleteCard(card.id)}
-                onTagNumberChange={(value) => updateTag(card.id, value, card.tagText)}
-                onTagTextChange={(value) => updateTag(card.id, card.tagNumber, value)}
+                tagText={card.cutName}
+                isHovered={hoveredCardKey === card.key}
+                onMouseEnter={() => setHoveredCardKey(card.key)}
+                onMouseLeave={() => setHoveredCardKey(null)}
+                onDelete={() => deleteCard(card.baseIndex)}
+                onTagNumberChange={(value) => updateTag(card.baseIndex, value, card.cutName)}
+                onTagTextChange={(value) => updateTag(card.baseIndex, card.tagNumber, value)}
                 printable={printable}
-                colorIndex={index}
+                colorIndex={card.displayIndex}
+                dataTagIndex={!printable && card.instanceIndex === 1 ? card.baseIndex : undefined}
             />
         ))
-    }, [cards, hoveredCardId, deleteCard, updateTag])
+    }, [expandedCards, hoveredCardKey, deleteCard, updateTag])
 
     const printIframeRef = useRef<HTMLIFrameElement | null>(null)
     const printRootRef = useRef<ReactDOM.Root | null>(null)
@@ -140,7 +204,7 @@ const PrintTags = () => {
                 }
             }
         }
-    }, [cards, settings, tagElements])
+    }, [tags, settings, tagElements])
 
     const handlePrint = () => {
         const iframe = printIframeRef.current
@@ -195,112 +259,126 @@ const PrintTags = () => {
                             ×
                         </button>
                     </div>
-                    <div
-                        ref={containerRef}
-                        className={`flex flex-1 overflow-y-auto bg-slate-50 px-8 py-8 ${isTopAligned ? 'items-start' : 'items-center'} justify-center`}
-                    >
-                        <div
-                            ref={contentRef}
-                            className="flex w-full flex-col items-center"
-                            style={{ maxWidth: `${TAG_MAX_CONTAINER_WIDTH}px`, gap: `${TAG_GAP}px` }}
-                        >
-                            {tagElements(false)}
-                            <div className="flex items-center" style={{ width: `${(settings.labelWidthInches * settings.scale) + (2 * 1.5)}in` }}>
-                                <div className="shrink-0" style={{ width: `1.5in` }} />
+                    <div className="flex flex-1 overflow-hidden bg-slate-50">
+                        {/* Left Column - Tag Content */}
+                        <div className="relative flex flex-1 overflow-hidden">
+                            <div
+                                ref={containerRef}
+                                className={`flex flex-1 overflow-y-auto px-8 py-8 ${isTopAligned ? 'items-start' : 'items-center'} justify-center`}
+                            >
+                                <div
+                                    ref={contentRef}
+                                    className="flex w-full flex-col items-center"
+                                    style={{ maxWidth: `${TAG_MAX_CONTAINER_WIDTH}px`, gap: `${TAG_GAP}px` }}
+                                >
+                                    {tagElements(false)}
+                                    <div className="flex items-center" style={{ width: `${(settings.labelWidthInches * settings.scale) + (2 * 1.5)}in` }}>
+                                        <div className="shrink-0" style={{ width: `1.5in` }} />
+                                        <button
+                                            type="button"
+                                            onClick={addCard}
+                                            className="flex h-20 items-center justify-center border-2 border-dashed border-slate-400 bg-slate-100 text-slate-600 transition-all hover:border-slate-500 hover:bg-slate-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                                            style={{
+                                                width: `${settings.labelWidthInches * settings.scale}in`,
+                                            }}
+                                        >
+                                            <span className="text-xl font-medium">+ Add Tag</span>
+                                        </button>
+                                        <div className="shrink-0" style={{ width: `1.5in` }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons - Anchored to left column */}
+                            <div className="absolute bottom-12 right-12 flex flex-col gap-3">
                                 <button
                                     type="button"
-                                    onClick={addCard}
-                                    className="flex h-20 items-center justify-center border-2 border-dashed border-slate-400 bg-slate-100 text-slate-600 transition-all hover:border-slate-500 hover:bg-slate-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                                    style={{
-                                        width: `${settings.labelWidthInches * settings.scale}in`,
-                                    }}
+                                    onClick={() => setShowSettings(true)}
+                                    className="flex items-center gap-2 rounded-xl bg-slate-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-slate-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
+                                    aria-label="Settings"
                                 >
-                                    <span className="text-xl font-medium">+ Add Tag</span>
+                                    <svg
+                                        className="h-6 w-6"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <span className="text-lg font-semibold">Settings</span>
                                 </button>
-                                <div className="shrink-0" style={{ width: `1.5in` }} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    className={`flex items-center gap-2 rounded-xl px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${showPreview
+                                        ? 'bg-green-600/80 hover:bg-green-700/90 focus-visible:outline-green-500'
+                                        : 'bg-slate-600/80 hover:bg-slate-700/90 focus-visible:outline-slate-500'
+                                        }`}
+                                    aria-label="Preview"
+                                >
+                                    <svg
+                                        className="h-6 w-6"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <span className="text-lg font-semibold">Preview</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handlePrint}
+                                    className="flex items-center gap-2 rounded-xl bg-blue-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-blue-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                                    aria-label="Print"
+                                >
+                                    <svg
+                                        className="h-6 w-6"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <span className="text-lg font-semibold">Print</span>
+                                </button>
                             </div>
                         </div>
+
+                        {/* Right Column - Tag Editor */}
+                        <TagEditor
+                            tags={tags}
+                            setTags={setTags}
+                            onFocusTagIndex={scrollPreviewToTagIndex}
+                        />
                     </div>
                 </div>
             </div>
             <TagSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
-            <div className="fixed bottom-12 right-12 flex flex-col gap-3">
-                <button
-                    type="button"
-                    onClick={() => setShowSettings(true)}
-                    className="flex items-center gap-2 rounded-xl bg-slate-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-slate-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
-                    aria-label="Settings"
-                >
-                    <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="text-lg font-semibold">Settings</span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setShowPreview(!showPreview)}
-                    className={`flex items-center gap-2 rounded-xl px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${showPreview
-                        ? 'bg-green-600/80 hover:bg-green-700/90 focus-visible:outline-green-500'
-                        : 'bg-slate-600/80 hover:bg-slate-700/90 focus-visible:outline-slate-500'
-                        }`}
-                    aria-label="Preview"
-                >
-                    <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                        <path
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    </svg>
-                    <span className="text-lg font-semibold">Preview</span>
-                </button>
-                <button
-                    type="button"
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 rounded-xl bg-blue-600/80 px-6 py-4 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-blue-700/90 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                    aria-label="Print"
-                >
-                    <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    </svg>
-                    <span className="text-lg font-semibold">Print</span>
-                </button>
-            </div>
         </>
     )
 }

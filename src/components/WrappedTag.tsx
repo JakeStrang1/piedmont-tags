@@ -12,6 +12,7 @@ interface WrappedTagProps {
     onTagTextChange: (value: string) => void
     printable?: boolean
     colorIndex?: number
+    dataTagIndex?: number
 }
 
 const WrappedTag = ({
@@ -25,6 +26,7 @@ const WrappedTag = ({
     onTagTextChange,
     printable = false,
     colorIndex = 0,
+    dataTagIndex,
 }: WrappedTagProps) => {
     const { settings } = useTagSettings()
 
@@ -57,6 +59,7 @@ const WrappedTag = ({
             className="relative flex items-center"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            data-tag-index={dataTagIndex}
             style={{
                 width: `${wrapperWidth}in`,
             }}
