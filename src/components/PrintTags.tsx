@@ -14,12 +14,15 @@ interface TagData {
     tagNumber: string
     cutName: string
     numberOfTags: number
+    species?: string
 }
 
 const PrintTags = () => {
     const navigate = useNavigate()
     const { settings } = useTagSettings()
     const [tags, setTags] = useState<TagData[]>([])
+    const [tagNumber, setTagNumber] = useState('')
+    const [species, setSpecies] = useState('')
     const [isTopAligned, setIsTopAligned] = useState(false)
     const [hoveredCardKey, setHoveredCardKey] = useState<string | null>(null)
     const [showSettings, setShowSettings] = useState(false)
@@ -52,19 +55,37 @@ const PrintTags = () => {
                 prev.length === 0 ? 1 : Math.max(...prev.map((c) => c.index)) + 1
             return [
                 ...prev,
-                { index: nextIndex, tagNumber: 'Tag #', cutName: 'CUT NAME', numberOfTags: 1 },
+                { index: nextIndex, tagNumber: tagNumber, species: species, cutName: '', numberOfTags: 1 },
             ]
         })
     }
 
     const deleteCard = useCallback((index: number) => {
-        setTags((prevTags) => prevTags.filter((tag) => tag.index !== index))
+        // When deleting a rendered tag instance, decrement numberOfTags on the shared entry.
+        // If it would go below 1, remove the entry entirely.
+        setTags((prevTags) =>
+            prevTags
+                .map((tag) => {
+                    if (tag.index !== index) return tag
+                    const nextCount = Math.max(0, Math.floor(tag.numberOfTags || 1) - 1)
+                    return { ...tag, numberOfTags: nextCount }
+                })
+                .filter((tag) => Math.max(0, Math.floor(tag.numberOfTags || 0)) > 0)
+        )
     }, [])
 
-    const updateTag = useCallback((index: number, tagNumber: string, cutName: string) => {
+    const updateTagNumber = useCallback((index: number, tagNumber: string) => {
         setTags((prevTags) =>
             prevTags.map((tag) =>
-                tag.index === index ? { ...tag, tagNumber, cutName } : tag
+                tag.index === index ? { ...tag, tagNumber } : tag
+            )
+        )
+    }, [])
+
+    const updateTagCutName = useCallback((index: number, cutName: string) => {
+        setTags((prevTags) =>
+            prevTags.map((tag) =>
+                tag.index === index ? { ...tag, cutName } : tag
             )
         )
     }, [])
@@ -125,14 +146,15 @@ const PrintTags = () => {
                 onMouseEnter={() => setHoveredCardKey(card.key)}
                 onMouseLeave={() => setHoveredCardKey(null)}
                 onDelete={() => deleteCard(card.baseIndex)}
-                onTagNumberChange={(value) => updateTag(card.baseIndex, value, card.cutName)}
-                onTagTextChange={(value) => updateTag(card.baseIndex, card.tagNumber, value)}
+                // Edits apply to the shared tag entry so all rendered instances update together.
+                onTagNumberChange={(value) => updateTagNumber(card.baseIndex, value)}
+                onTagTextChange={(value) => updateTagCutName(card.baseIndex, value)}
                 printable={printable}
                 colorIndex={card.displayIndex}
                 dataTagIndex={!printable && card.instanceIndex === 1 ? card.baseIndex : undefined}
             />
         ))
-    }, [expandedCards, hoveredCardKey, deleteCard, updateTag])
+    }, [expandedCards, hoveredCardKey, deleteCard, updateTagNumber, updateTagCutName])
 
     const printIframeRef = useRef<HTMLIFrameElement | null>(null)
     const printRootRef = useRef<ReactDOM.Root | null>(null)
@@ -373,6 +395,10 @@ const PrintTags = () => {
                         <TagEditor
                             tags={tags}
                             setTags={setTags}
+                            tagNumber={tagNumber}
+                            setTagNumber={setTagNumber}
+                            species={species}
+                            setSpecies={setSpecies}
                             onFocusTagIndex={scrollPreviewToTagIndex}
                         />
                     </div>

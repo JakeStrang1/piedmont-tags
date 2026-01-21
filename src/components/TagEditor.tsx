@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { parseLotNumbers } from '../utilities/parseLotNumbers'
 import Tooltip from './Tooltip'
 import { useSpeciesData } from '../hooks/useSpeciesData'
@@ -12,23 +12,28 @@ interface TagData {
     tagNumber: string
     cutName: string
     numberOfTags: number
+    species?: string
 }
 
 interface TagEditorProps {
     tags: TagData[]
     setTags: React.Dispatch<React.SetStateAction<TagData[]>>
+    tagNumber: string
+    setTagNumber: React.Dispatch<React.SetStateAction<string>>
+    species: string
+    setSpecies: React.Dispatch<React.SetStateAction<string>>
     onFocusTagIndex?: (tagIndex: number) => void
 }
 
-const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
+const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies, onFocusTagIndex }: TagEditorProps) => {
     const [mode, setMode] = useState<EditorMode>('quick')
-    const [tagNumber, setTagNumber] = useState('')
-    const [species, setSpecies] = useState('')
 
     const { speciesData, isLoading } = useSpeciesData()
 
     const derivedLots = useMemo(() => parseLotNumbers(tagNumber), [tagNumber])
-    const meaningfulTextClass = 'text-blue-700'
+    const meaningfulTextClass = '!text-blue-700'
+
+    const clampTagsCount = (n: number) => Math.min(500, Math.max(1, n))
 
     const speciesOptions = useMemo(() => {
         const names = speciesData
@@ -50,6 +55,60 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
         return match ? match.cuts.length : null
     }, [isSpeciesFromList, species, speciesData])
 
+    const getCutForSpecies = (speciesValue: string, cutName: string) => {
+        if (!speciesValue || !cutName) return null
+        const match = speciesData.find((s) => s.species === speciesValue)
+        if (!match) return null
+        return match.cuts.find((c) => c.name === cutName) ?? null
+    }
+
+    const calcNumberOfTags = (args: {
+        tagNumberValue: string
+        speciesValue: string
+        cutName: string
+    }) => {
+        const { tagNumberValue, speciesValue, cutName } = args
+        const animalCount = parseLotNumbers(tagNumberValue).length
+        const cut = getCutForSpecies(speciesValue, cutName)
+        if (!cut) return 1
+        const base = cut.tags
+        const computed = cut.perAnimal ? base * Math.max(1, animalCount) : base
+        return clampTagsCount(computed)
+    }
+
+    // Global rule: whenever global tag number OR species changes,
+    // update ALL tags' tagNumber/species and recalc numberOfTags.
+    // (Cut types do not change.)
+    useEffect(() => {
+        setTags((prev) => {
+            let didChange = false
+            const next = prev.map((t) => {
+                const nextCount = calcNumberOfTags({
+                    tagNumberValue: tagNumber,
+                    speciesValue: species,
+                    cutName: t.cutName,
+                })
+
+                if (
+                    t.tagNumber === tagNumber &&
+                    (t.species ?? '') === species &&
+                    t.numberOfTags === nextCount
+                ) {
+                    return t
+                }
+
+                didChange = true
+                return {
+                    ...t,
+                    tagNumber,
+                    species,
+                    numberOfTags: nextCount,
+                }
+            })
+            return didChange ? next : prev
+        })
+    }, [tagNumber, species, setTags]) // eslint-disable-line react-hooks/exhaustive-deps
+
     const cutTypeOptions = useMemo(() => {
         if (!isSpeciesFromList) return []
         const match = speciesData.find((s) => s.species === species)
@@ -63,21 +122,43 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
         return names.map((name) => ({ value: name, label: name }))
     }, [isSpeciesFromList, species, speciesData])
 
-    const updateTagCutName = (tagIndex: number, cutName: string) => {
-        let matchedTagsCount: number | null = null
-        if (isSpeciesFromList) {
-            const match = speciesData.find((s) => s.species === species)
-            const cut = match?.cuts.find((c) => c.name === cutName)
-            if (cut) matchedTagsCount = cut.tags
-        }
+    const getCutTypeOptionsForSpecies = (speciesValue: string) => {
+        if (!speciesValue) return []
+        const match = speciesData.find((s) => s.species === speciesValue)
+        if (!match) return []
 
+        const names = match.cuts
+            .map((c) => c.name)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b))
+
+        return names.map((name) => ({ value: name, label: name }))
+    }
+
+    const updateTagCutName = (tagIndex: number, cutName: string) => {
         setTags((prev) =>
-            prev.map((tag) => {
-                if (tag.index !== tagIndex) return tag
-                return {
-                    ...tag,
+            prev.map((t) => {
+                if (t.index !== tagIndex) return t
+
+                const speciesToUse = t.species ?? ''
+
+                const prevCalculated = calcNumberOfTags({
+                    tagNumberValue: t.tagNumber,
+                    speciesValue: speciesToUse,
+                    cutName: t.cutName,
+                })
+                const shouldSync = t.numberOfTags === prevCalculated
+
+                const nextCalculated = calcNumberOfTags({
+                    tagNumberValue: t.tagNumber,
+                    speciesValue: speciesToUse,
                     cutName,
-                    numberOfTags: matchedTagsCount ?? tag.numberOfTags,
+                })
+
+                return {
+                    ...t,
+                    cutName,
+                    numberOfTags: shouldSync ? nextCalculated : t.numberOfTags,
                 }
             })
         )
@@ -87,10 +168,85 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
         setTags((prev) => prev.filter((tag) => tag.index !== tagIndex))
     }
 
+    const updateTagNumber = (tagIndex: number, tagNumberValue: string) => {
+        setTags((prev) =>
+            prev.map((t) => {
+                if (t.index !== tagIndex) return t
+
+                // Do NOT trim here: allow spaces while typing in the Tag # Autocomplete
+                const nextTagNumber = tagNumberValue.toUpperCase() || ''
+                const speciesToUse = t.species ?? ''
+
+                const prevCalculated = calcNumberOfTags({
+                    tagNumberValue: t.tagNumber,
+                    speciesValue: speciesToUse,
+                    cutName: t.cutName,
+                })
+                const shouldSync = t.numberOfTags === prevCalculated
+
+                const nextCalculated = calcNumberOfTags({
+                    tagNumberValue: nextTagNumber,
+                    speciesValue: speciesToUse,
+                    cutName: t.cutName,
+                })
+
+                return {
+                    ...t,
+                    tagNumber: nextTagNumber,
+                    numberOfTags: shouldSync ? nextCalculated : t.numberOfTags,
+                }
+            })
+        )
+    }
+
+    const updateTagNumberOfTags = (tagIndex: number, numTags: number) => {
+        setTags((prev) =>
+            prev.map((tag) => {
+                if (tag.index !== tagIndex) return tag
+                return {
+                    ...tag,
+                    numberOfTags: clampTagsCount(numTags),
+                }
+            })
+        )
+    }
+
+    const updateTagSpecies = (tagIndex: number, speciesValue: string) => {
+        setTags((prev) =>
+            prev.map((t) => {
+                if (t.index !== tagIndex) return t
+
+                const nextSpecies = speciesValue
+
+                const prevCalculated = calcNumberOfTags({
+                    tagNumberValue: t.tagNumber,
+                    speciesValue: t.species ?? '',
+                    cutName: t.cutName,
+                })
+                const shouldSync = t.numberOfTags === prevCalculated
+
+                const nextCalculated = calcNumberOfTags({
+                    tagNumberValue: t.tagNumber,
+                    speciesValue: nextSpecies,
+                    cutName: t.cutName,
+                })
+
+                return {
+                    ...t,
+                    species: nextSpecies,
+                    numberOfTags: shouldSync ? nextCalculated : t.numberOfTags,
+                }
+            })
+        )
+    }
+
+    const tagNumberOptions = useMemo(() => {
+        return derivedLots.map((lot) => ({ value: lot, label: lot }))
+    }, [derivedLots])
+
     const handleTagNumberChange = (value: string) => {
         const nextValue = value.toUpperCase()
         setTagNumber(nextValue)
-        setTags((prev) => prev.map((t) => ({ ...t, tagNumber: nextValue })))
     }
 
     // (previously: addNewTag via extra empty row; replaced by Add Cut Type button)
@@ -105,9 +261,14 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
                 ...prev,
                 {
                     index: nextIndex,
-                    tagNumber: tagNumber.trim() || 'Tag #',
+                    tagNumber: tagNumber,
+                    species: species,
                     cutName: '',
-                    numberOfTags: 1,
+                    numberOfTags: calcNumberOfTags({
+                        tagNumberValue: tagNumber,
+                        speciesValue: species,
+                        cutName: '',
+                    }),
                 },
             ]
         })
@@ -145,7 +306,7 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
             <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="bg-slate-700 px-4 py-2 mb-2">
                     <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                        Overview
+                        Apply to All
                     </div>
                 </div>
 
@@ -220,12 +381,18 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
                 <div className="cuts flex-1 overflow-y-auto">
                     <div className="flex flex-col">
                         {tags.map((tag) => {
-                            const isCutTypeFromList = cutTypeOptions.some((opt) => opt.value === tag.cutName)
+                            // In manual mode, use tag's species; in quick mode, use parent species
+                            const tagSpecies = mode === 'manual' ? (tag.species || '') : species
+                            const tagCutTypeOptions = mode === 'manual'
+                                ? getCutTypeOptionsForSpecies(tagSpecies)
+                                : cutTypeOptions
+                            const isTagSpeciesFromList = !!(tagSpecies && speciesOptions.some((o) => o.value === tagSpecies))
+                            const isCutTypeFromList = tagCutTypeOptions.some((opt) => opt.value === tag.cutName)
 
                             // Find the cut data for this cut type
                             let cutData: { numberOfTags: number; perAnimal: boolean } | null = null
-                            if (isSpeciesFromList && isCutTypeFromList) {
-                                const match = speciesData.find((s) => s.species === species)
+                            if (isTagSpeciesFromList && isCutTypeFromList) {
+                                const match = speciesData.find((s) => s.species === tagSpecies)
                                 if (match) {
                                     const cut = match.cuts.find((c) => c.name === tag.cutName)
                                     if (cut) {
@@ -237,12 +404,42 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
                                 }
                             }
 
+                            // Manual mode meaningful color checks
+                            const tagNumberCanParseToLots =
+                                mode === 'manual'
+                                    ? parseLotNumbers(tag.tagNumber).length > 0
+                                    : false
+
+                            const calculatedNumberOfTags =
+                                mode === 'manual'
+                                    ? calcNumberOfTags({
+                                        tagNumberValue: tag.tagNumber,
+                                        speciesValue: tagSpecies,
+                                        cutName: tag.cutName,
+                                    })
+                                    : calcNumberOfTags({
+                                        tagNumberValue: tagNumber,
+                                        speciesValue: species,
+                                        cutName: tag.cutName,
+                                    })
+
+                            const isNumberOfTagsCalculatedMatch =
+                                mode === 'manual'
+                                    ? tag.numberOfTags === calculatedNumberOfTags
+                                    : false
+
+                            // In quick mode, tag is manually overridden if numberOfTags doesn't match calculated
+                            const isManuallyOverridden =
+                                mode === 'quick' && calculatedNumberOfTags !== null
+                                    ? tag.numberOfTags !== calculatedNumberOfTags
+                                    : false
+
                             return (
                                 <div key={tag.index}>
                                     <TagInfo
                                         value={tag.cutName}
                                         onChange={(v) => updateTagCutName(tag.index, v)}
-                                        options={cutTypeOptions}
+                                        options={tagCutTypeOptions}
                                         onRemove={() => removeTag(tag.index)}
                                         showRemove
                                         autoFocus={focusCutIndex === tag.index}
@@ -251,6 +448,24 @@ const TagEditor = ({ tags, setTags, onFocusTagIndex }: TagEditorProps) => {
                                         perAnimal={cutData?.perAnimal}
                                         animalCount={derivedLots.length}
                                         onFocused={() => onFocusTagIndex?.(tag.index)}
+                                        quickMode={mode === 'quick'}
+                                        tagNumber={tag.tagNumber}
+                                        onTagNumberChange={(v) => updateTagNumber(tag.index, v)}
+                                        tagNumberOptions={tagNumberOptions}
+                                        species={mode === 'manual' ? (tag.species || '') : species}
+                                        onSpeciesChange={mode === 'manual'
+                                            ? (v) => updateTagSpecies(tag.index, v)
+                                            : setSpecies}
+                                        speciesOptions={speciesOptions}
+                                        speciesDisabled={isLoading}
+                                        numberOfTagsInput={tag.numberOfTags}
+                                        onNumberOfTagsChange={(v) => updateTagNumberOfTags(tag.index, v)}
+                                        tagNumberCanParseToLots={tagNumberCanParseToLots}
+                                        isTagSpeciesFromList={isTagSpeciesFromList}
+                                        isTagCutTypeFromList={isCutTypeFromList}
+                                        isNumberOfTagsCalculatedMatch={isNumberOfTagsCalculatedMatch}
+                                        calculatedNumberOfTags={calculatedNumberOfTags ?? undefined}
+                                        isManuallyOverridden={isManuallyOverridden}
                                     />
                                 </div>
                             )

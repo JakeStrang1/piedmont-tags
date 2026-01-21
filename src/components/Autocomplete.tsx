@@ -16,6 +16,7 @@ interface AutocompleteProps {
     forceUppercase?: boolean
     allowCustomValues?: boolean
     autoFocus?: boolean
+    compact?: boolean
 }
 
 const Autocomplete = ({
@@ -29,6 +30,7 @@ const Autocomplete = ({
     forceUppercase = false,
     allowCustomValues = false,
     autoFocus = false,
+    compact = false,
 }: AutocompleteProps) => {
     const [isOpen, setIsOpen] = useState(false)
     const [inputValue, setInputValue] = useState('')
@@ -195,6 +197,16 @@ const Autocomplete = ({
         setHighlightedIndex(-1)
     }
 
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const nextFocused = e.relatedTarget as Node | null
+        // If focus is still within the autocomplete container (e.g. interacting with the menu),
+        // don't close here.
+        if (nextFocused && containerRef.current?.contains(nextFocused)) return
+
+        setIsOpen(false)
+        setHighlightedIndex(-1)
+    }
+
     const handleSelect = (option: AutocompleteOption) => {
         onChange(option.value)
         setInputValue(option.label)
@@ -262,10 +274,11 @@ const Autocomplete = ({
                 value={displayValue}
                 onChange={handleInputChange}
                 onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 disabled={disabled}
-                className={`w-full border-0 border-b-2 border-slate-300 bg-transparent px-0 py-2 text-lg font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 ${inputClassName}`}
+                className={`w-full border-0 border-b-2 border-slate-300 bg-transparent px-0 ${compact ? 'py-0.5' : 'py-2'} text-lg font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 ${inputClassName}`}
             />
             {isOpen && !disabled && filteredOptions.length > 0 && menuRect && (
                 <ul
@@ -289,6 +302,11 @@ const Autocomplete = ({
                         return (
                             <li
                                 key={option.value}
+                                onMouseDown={(e) => {
+                                    // Select before the input loses focus (tabbing/clicking)
+                                    e.preventDefault()
+                                    handleSelect(option)
+                                }}
                                 onClick={() => handleSelect(option)}
                                 className={`cursor-pointer px-3 py-2 text-sm transition-colors ${isHighlighted
                                     ? 'bg-blue-100 text-blue-900'

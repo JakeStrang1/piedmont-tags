@@ -106,18 +106,20 @@ const EditableTag = ({ tagNumber, tagText, onTagNumberChange, onTagTextChange, p
                 <input
                     type="text"
                     value={tagNumber}
-                    onChange={(e) => onTagNumberChange(e.target.value)}
+                    onChange={(e) => onTagNumberChange(e.target.value.toUpperCase())}
                     readOnly={printable}
                     disabled={printable}
-                    className="w-full rounded-md bg-transparent text-center text-3xl font-semibold text-slate-900 outline-none border border-transparent px-1.5 py-0.5 m-0 transition-all hover:bg-slate-100 focus:bg-slate-100 focus:border-dashed focus:border-slate-400 focus:ring-0 focus:outline-none disabled:hover:bg-transparent disabled:cursor-default"
+                    className="w-full rounded-md bg-transparent text-center text-3xl font-semibold text-slate-900 outline-none border border-transparent px-1.5 py-0.5 m-0 transition-all hover:bg-slate-100 focus:bg-slate-100 focus:border-dashed focus:border-slate-400 focus:ring-0 focus:outline-none disabled:hover:bg-transparent disabled:cursor-default uppercase"
+                    style={{ textTransform: 'uppercase' }}
                 />
                 <input
                     type="text"
                     value={tagText}
-                    onChange={(e) => onTagTextChange(e.target.value)}
+                    onChange={(e) => onTagTextChange(e.target.value.toUpperCase())}
                     readOnly={printable}
                     disabled={printable}
-                    className="w-full rounded-md bg-transparent text-center text-3xl font-semibold text-slate-900 outline-none border border-transparent px-1.5 py-0.5 m-0 transition-all hover:bg-slate-100 focus:bg-slate-100 focus:border-dashed focus:border-slate-400 focus:ring-0 focus:outline-none disabled:hover:bg-transparent disabled:cursor-default"
+                    className="w-full rounded-md bg-transparent text-center text-3xl font-semibold text-slate-900 outline-none border border-transparent px-1.5 py-0.5 m-0 transition-all hover:bg-slate-100 focus:bg-slate-100 focus:border-dashed focus:border-slate-400 focus:ring-0 focus:outline-none disabled:hover:bg-transparent disabled:cursor-default uppercase"
+                    style={{ textTransform: 'uppercase' }}
                 />
             </div>
         </div>
