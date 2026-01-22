@@ -1,8 +1,9 @@
 {
   "name": "piedmont-tags",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
+  "author": "Jake Strang Software",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",

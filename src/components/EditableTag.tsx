@@ -83,7 +83,7 @@ const EditableTag = ({ tagNumber, tagText, onTagNumberChange, onTagTextChange, p
 
     return (
         <div
-            className={`relative border border-slate-900 bg-white p-6 ${printable ? '' : 'shadow-xl'}`}
+            className={`relative border border-slate-300 bg-white p-6 ${printable ? '' : 'shadow-xl'}`}
             style={{
                 width: `${baseWidth}in`,
                 height: `${baseHeight}in`,
