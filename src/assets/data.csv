@@ -1,259 +1,258 @@
 species,cut name,tags,per animal
-Beef,Chuck Roast B/I,1,TRUE
-Beef,Chuck Roast B/O,1,TRUE
-Beef,Shoulder Roast,1,TRUE
-Beef,Chuck Eye Steak,1,TRUE
-Beef,Ranch Steak,1,TRUE
-Beef,Flat Iron,1,TRUE
-Beef,Denver Steak,1,TRUE
-Beef,Ground Chuck,3,TRUE
-Beef,Rib Roast B/I,1,TRUE
-Beef,Rib Roast B/O,1,TRUE
-Beef,Ribeye Steak B/I,1,TRUE
-Beef,Ribeye Steak B/O,1,TRUE
-Beef,Tomahawk,1,TRUE
-Beef,Back Ribs,1,TRUE
-Beef,Skirt,1,TRUE
-Beef,Flank,1,TRUE
-Beef,Hanger,1,TRUE
-Beef,Sirloin Flap,1,TRUE
-Beef,Beef Tips,2,FALSE
-Beef,Beef Stew,2,FALSE
-Beef,Kabobs,2,FALSE
-Beef,Stir Fry,2,FALSE
-Beef,Flanken Ribs,1,TRUE
-Beef,Short Ribs B/O,1,TRUE
-Beef,Short Ribs B/I,1,TRUE
-Beef,Short Ribs WH,1,TRUE
-Beef,Porterhouse,1,TRUE
-Beef,T-Bone,1,TRUE
-Beef,Sirloin Steak B/I,1,TRUE
-Beef,Sirloin Steak B/O,1,TRUE
-Beef,Coulotte,1,TRUE
-Beef,NY Strip Steak B/I,1,TRUE
-Beef,NY Strip Steak B/O,1,TRUE
-Beef,NY Strip Steak WH,1,TRUE
-Beef,Tenderloin WH,1,TRUE
-Beef,Tenderloin Filet,1,TRUE
-Beef,Tri-Tip,1,TRUE
-Beef,Sirloin Tip Roast,1,TRUE
-Beef,Sirloin Tip Steak,1,TRUE
-Beef,London Broil,1,TRUE
-Beef,Top Round Roast,1,TRUE
-Beef,Top Round Steak,1,TRUE
-Beef,Bottom Round Roast ,1,TRUE
-Beef,Bottom Round Roast Rump,1,TRUE
-Beef,Bottom Round Steak,1,TRUE
-Beef,Eye of Round Roast,1,TRUE
-Beef,Eye of Round Steak,1,TRUE
-Beef,Cubed Steak,2,FALSE
-Beef,Ground Round,3,TRUE
-Beef,Soup Bones,2,TRUE
-Beef,Knuckle Bones,1,TRUE
-Beef,Marrow Bones,1,TRUE
-Beef,Liver Sliced,1,TRUE
-Beef,Hearts,1,TRUE
-Beef,Kidneys,1,TRUE
-Beef,Oxtail,1,TRUE
-Beef,Tongue,1,TRUE
-Beef,Beef Fat,1,TRUE
-Beef,Ground Beef 1#,8,TRUE
-Beef,Ground Beef 5#,5,FALSE
-Beef,4oz Patties,3,FALSE
-Beef,5oz Patties,3,FALSE
-Beef,7oz Patties,3,FALSE
-Beef,Meat Loaf,3,FALSE
-Beef,Ancestrial Blend,3,FALSE
-Beef,Brat Link,3,FALSE
-Beef,Garlin Brat Link,3,FALSE
-Beef,Hot Pound,3,FALSE
-Beef,Hot Link,3,FALSE
-Beef,Hot B-Link,3,FALSE
-Beef,Hot Patties,3,FALSE
-Beef,Hot Italian Link,3,FALSE
-Beef,Keilbasa Link,3,FALSE
-Beef,Mild Pound,3,FALSE
-Beef,Mild Link,3,FALSE
-Beef,Mild B-Link,3,FALSE
-Beef,Mild Italian Pound,3,FALSE
-Beef,Sweet Italian Link,3,FALSE
-Beef,Chorizo Pound,3,FALSE
-Beef,Chorizo Link,3,FALSE
-Beef,Hot X-Sage Link,3,FALSE
-Beef,Mild No Sugar,3,FALSE
-Beef,Hot Dog,5,FALSE
-Beef,Smoked Brat,4,FALSE
-Beef,Smoked Cajun,4,FALSE
-Beef,Smoked Garlic Brat,4,FALSE
-Beef,Smoked Hot,4,FALSE
-Beef,Smoked Hot Italian,4,FALSE
-Beef,Smoked Keilbasa,4,FALSE
-Beef,Smoked Mild,4,FALSE
-Beef,Smoked Mild Italian,4,FALSE
-Pork,Shoulder WH,1,TRUE
-Pork,Boston Butt B/I,1,TRUE
-Pork,Boston Butt B/O,1,TRUE
-Pork,Picnic,1,TRUE
-Pork,Shoulder Steak,1,TRUE
-Pork,Shoulder Coppa,1,TRUE
-Pork,Bellies WH,2,TRUE
-Pork,Bellies Blocked,2,TRUE
-Pork,Shanks WH,1,TRUE
-Pork,Shanks Sliced,1,TRUE
-Pork,Rib Half,1,TRUE
-Pork,Whole Loin B/O,1,TRUE
-Pork,Babybacks,1,TRUE
-Pork,Porterhouse,1,TRUE
-Pork,Chops B/I,1,TRUE
-Pork,Chops B/O,1,TRUE
-Pork,Tenderloin WH,1,TRUE
-Pork,Tenderloin Sliced,1,TRUE
-Pork,Roast B/I,1,TRUE
-Pork,Roast B/O,1,TRUE
-Pork,Spare Rib Whole,1,TRUE
-Pork,Spare Rib Sliced,1,TRUE
-Pork,St. Louis Ribs,1,TRUE
-Pork,Jowls WH,1,TRUE
-Pork,Jowls Sliced,1,TRUE
-Pork,Whole Ham,1,TRUE
-Pork,Ham Roast,1,TRUE
-Pork,Ham Steaks,1,TRUE
-Pork,Pork Stew,2,FALSE
-Pork,Pork Bones,2,TRUE
-Pork,Neck Bones,1,TRUE
-Pork,Leaf Fat,1,TRUE
-Pork,Liver,1,FALSE
-Pork,Hearts,1,FALSE
-Pork,Kidneys,1,FALSE
-Pork,Tongue,1,FALSE
-Pork,Bacon Sliced,2,TRUE
-Pork,Bacon Blocked,2,TRUE
-Pork,Jowls Sliced,2,TRUE
-Pork,Jowls Blocked,2,TRUE
-Pork,Ground Pork,3,FALSE
-Pork,Andouille Link,3,FALSE
-Pork,Brat Link,3,FALSE
-Pork,Cajun Pound,3,FALSE
-Pork,Cajun Link,3,FALSE
-Pork,Garlic Brat Link,3,FALSE
-Pork,Hot Pound,3,FALSE
-Pork,Hot Link,3,FALSE
-Pork,Hot B-Link,3,FALSE
-Pork,Hot Patties,3,FALSE
-Pork,Hot Italian Pound,3,FALSE
-Pork,Hot Italian Link,3,FALSE
-Pork,Kielbasa Link,3,FALSE
-Pork,Mild Italian Pound,3,FALSE
-Pork,Mild Italian Link,3,FALSE
-Pork,Mild Pound,3,FALSE
-Pork,Mild Link,3,FALSE
-Pork,Mild B-Link,3,FALSE
-Pork,Mild Patties,3,FALSE
-Pork,Sweet Italian Pound,3,FALSE
-Pork,Sweet Italian Link,3,FALSE
-Pork,Apple Cinnamon Pound,3,FALSE
-Pork,Apple Cinnamon B-Link,3,FALSE
-Pork,Apple Cinnamon Patties,3,FALSE
-Pork,Chorizo Pound,3,FALSE
-Pork,Chorizo Link,3,FALSE
-Pork,Hot X-Sage Pound,3,FALSE
-Pork,Hot X-Sage Link,3,FALSE
-Pork,Hot X-Sage B-Link,3,FALSE
-Pork,Hot X-Sage Patties,3,FALSE
-Pork,Maple Patties,3,FALSE
-Pork,Maple Pound,3,FALSE
-Pork,Maple B-Link,3,FALSE
-Pork,Mild X-Sage Pound,3,FALSE
-Pork,Mild X-Sage B-Link,3,FALSE
-Pork,Mild X-Sage Link,3,FALSE
-Pork,Mild X-Sage Patties,3,FALSE
-Pork,Mild No Sugar,3,FALSE
-Pork,Hotdogs,5,FALSE
-Pork,Smoked Andouille,4,FALSE
-Pork,Smoked Brat,4,FALSE
-Pork,Smoked Chorizo,4,FALSE
-Pork,Smoked Cajun,4,FALSE
-Pork,Smoked Garlic Brat,4,FALSE
-Pork,Smoked Keilbasa,4,FALSE
-Pork,Smoked Hot,4,FALSE
-Pork,Smoked Hot X-Sage,4,FALSE
-Pork,Smoked Hot Italian,4,FALSE
-Pork,Smoked Mild,4,FALSE
-Pork,Smoked Mild X-Sage,4,FALSE
-Pork,Smoked Mild Italian,4,FALSE
-Pork,Smoked Sweet Italian,4,FALSE
-Sheep,Shoulder Roast B/I,1,FALSE
-Sheep,Shoulder Roast B/O,1,FALSE
-Sheep,Neck Steak,1,FALSE
-Sheep,Shoulder Chops,1,FALSE
-Sheep,WH Leg,1,FALSE
-Sheep,Leg B/O,1,FALSE
-Sheep,Leg Roast B/I,1,FALSE
-Sheep,Leg Steaks,1,FALSE
-Sheep,Shanks WH,1,FALSE
-Sheep,Loin Chop,1,FALSE
-Sheep,Loin Roast,1,FALSE
-Sheep,Rib WH,1,FALSE
-Sheep,Spare Ribs,1,FALSE
-Sheep,Rib Chops,1,FALSE
-Sheep,French Rack,1,FALSE
-Sheep,Heart,1,FALSE
-Sheep,Kidneys,1,FALSE
-Sheep,Liver,1,FALSE
-Sheep,Testicles,1,FALSE
-Sheep,Tongue,1,FALSE
-Sheep,Soup Bones,1,FALSE
-Sheep,Kabobs,1,FALSE
-Sheep,Lamb Stew,1,FALSE
-Sheep,Ground Lamb,1,FALSE
-Sheep,Brat Link,1,FALSE
-Sheep,Cajun Link,1,FALSE
-Sheep,Chorizo Pound,1,FALSE
-Sheep,Chorizo Link,1,FALSE
-Sheep,Garlic Brat Link,1,FALSE
-Sheep,Hot X-Sage Pound,1,FALSE
-Sheep,Hot Italian Link,1,FALSE
-Sheep,Maple Pound,1,FALSE
-Sheep,Mild Pound,1,FALSE
-Sheep,Sweet Italian Pound,1,FALSE
-Sheep,Sweet Italian Link,1,FALSE
-Sheep,Mergues Link,1,FALSE
-Goat,Shoulder WH B/I,1,FALSE
-Goat,Shoulder WH B/O,1,FALSE
-Goat,Shoulder Roast B/I,1,FALSE
-Goat,Shoulder Roast B/O,1,FALSE
-Goat,Shoulder Steak B/I,1,FALSE
-Goat,Shoulder Steak B/O,1,FALSE
-Goat,Shoulder Chops B/I,1,FALSE
-Goat,Shoulder Chops B/O,1,FALSE
-Goat,Leg  WH B/I,1,FALSE
-Goat,Leg  WH B/O,1,FALSE
-Goat,Leg Roast B/I,1,FALSE
-Goat,Leg Roast B/O,1,FALSE
-Goat,Leg Steak B/I,1,FALSE
-Goat,Shanks WH,1,FALSE
-Goat,Shanks Sliced,1,FALSE
-Goat,WH Loin B/I,1,FALSE
-Goat,Loin Chop B/I,1,FALSE
-Goat,Loin Roast B/I,1,FALSE
-Goat,WH Rib B/I,1,FALSE
-Goat,Rib Chops,1,FALSE
-Goat,Spare Ribs,1,FALSE
-Goat,Heart,1,FALSE
-Goat,Kidneys,1,FALSE
-Goat,Liver,1,FALSE
-Goat,Soup Bones,1,FALSE
-Goat,Brat Link,3,FALSE
-Goat,Chorizo Link,3,FALSE
-Goat,Hot Pound,3,FALSE
-Goat,Hot Link,3,FALSE
-Goat,Hot X-Sage Pound,3,FALSE
-Goat,Hot X-Sage Link,3,FALSE
-Goat,Hot Italian Link,3,FALSE
-Goat,Kielbasa Link,3,FALSE
-Goat,Maple Pound,3,FALSE
-Goat,Mild Pound,3,FALSE
-Goat,Mild Link,3,FALSE
-Goat,Mild X-Sage Pound,3,FALSE
-Goat,Mild X-Sage Link,3,FALSE
-Goat,Sweet Italian Link,3,FALSE
+Beef,CHK ROAST B/I,1,TRUE
+Beef,CHK ROAST B/O,1,TRUE
+Beef,SHLD ROAST,1,TRUE
+Beef,CK EYE STEAK,1,TRUE
+Beef,RANCH STEAK,1,TRUE
+Beef,FLAT IRON,1,TRUE
+Beef,DENVER,1,TRUE
+Beef,GRD CHUCK,3,TRUE
+Beef,RIB ROAST B/I,1,TRUE
+Beef,RIB ROAST B/O,1,TRUE
+Beef,RIBEYE B/I,1,TRUE
+Beef,RIBEYE B/O,1,TRUE
+Beef,TOMAHAWK,1,TRUE
+Beef,BACK RIBS,1,TRUE
+Beef,SKIRT,1,TRUE
+Beef,FLANK,1,TRUE
+Beef,HANGER,1,TRUE
+Beef,SIRLOIN FLAP,1,TRUE
+Beef,BEEF TIPS,2,FALSE
+Beef,BEEF STEW,2,FALSE
+Beef,KABOBS,2,FALSE
+Beef,STIR FRY,2,FALSE
+Beef,FLANKEN RIBS,1,TRUE
+Beef,SHORT RIB B/O,1,TRUE
+Beef,SHORT RIB B/I,1,TRUE
+Beef,SHORT RIB WHL,1,TRUE
+Beef,PORTERHOUSE,1,TRUE
+Beef,T-BONE,1,TRUE
+Beef,SIRLOIN B/I,1,TRUE
+Beef,SIRLOIN B/O,1,TRUE
+Beef,COULOTTE,1,TRUE
+Beef,NY STRIP B/I,1,TRUE
+Beef,NY STRIP B/O,1,TRUE
+Beef,NY STRIP WHL,1,TRUE
+Beef,T-LOIN WHL,1,TRUE
+Beef,T-LOIN FILET,1,TRUE
+Beef,TRI-TIP,1,TRUE
+Beef,SIR TIP ROAST,1,TRUE
+Beef,SIR TIP STEAK,1,TRUE
+Beef,LONDON,1,TRUE
+Beef,TOP RND ROAST,1,TRUE
+Beef,TOP RND STEAK,1,TRUE
+Beef,BTM RND ROAST ,1,TRUE
+Beef,RUMP ROAST,1,TRUE
+Beef,BTM RND STEAK,1,TRUE
+Beef,EYE RND ROAST,1,TRUE
+Beef,EYE RND STEAK,1,TRUE
+Beef,CUBED STEAK,2,FALSE
+Beef,GRD ROUND,3,TRUE
+Beef,SOUP BONES,2,TRUE
+Beef,KNUCKLE,1,TRUE
+Beef,MARROW,1,TRUE
+Beef,LIVER,1,TRUE
+Beef,HEARTS,1,TRUE
+Beef,KIDNEYS,1,TRUE
+Beef,OXTAIL,1,TRUE
+Beef,TONGUE,1,TRUE
+Beef,BEEF FAT,1,TRUE
+Beef,GB 1LB,8,TRUE
+Beef,GB 5LB,5,FALSE
+Beef,4OZ PATTIES,3,FALSE
+Beef,5OZ PATTIES,3,FALSE
+Beef,7OZ PATTIES,3,FALSE
+Beef,MEAT LOAF,3,FALSE
+Beef,ANCESTRIAL,3,FALSE
+Beef,BRAT L,3,FALSE
+Beef,G-BRAT L,3,FALSE
+Beef,HOT LB,3,FALSE
+Beef,HOT L,3,FALSE
+Beef,HOT BL,3,FALSE
+Beef,HOT P,3,FALSE
+Beef,KEILBASA L,3,FALSE
+Beef,MILD LB,3,FALSE
+Beef,MILD L,3,FALSE
+Beef,MILD BL,3,FALSE
+Beef,MILD ITAL LB,3,FALSE
+Beef,SWEET ITAL L,3,FALSE
+Beef,CHORIZO LB,3,FALSE
+Beef,CHORIZO L,3,FALSE
+Beef,HOT X-SAGE L,3,FALSE
+Beef,MILD NO SGR LB,3,FALSE
+Beef,HOT DOG,5,FALSE
+Beef,SM BRAT,4,FALSE
+Beef,SM CAJUN,4,FALSE
+Beef,SM G-BRAT,4,FALSE
+Beef,SM HOT,4,FALSE
+Beef,SM HOT ITAL,4,FALSE
+Beef,SM KEILBASA,4,FALSE
+Beef,SM MILD,4,FALSE
+Beef,SM MILD ITAL,4,FALSE
+Pork,SHLD WHL,1,TRUE
+Pork,BUTT B/I,1,TRUE
+Pork,BUTT B/O,1,TRUE
+Pork,PICNIC,1,TRUE
+Pork,SHLD STEAK,1,TRUE
+Pork,SHLD COPPA,1,TRUE
+Pork,BELLIES WHL,2,TRUE
+Pork,BELLIES BLK,2,TRUE
+Pork,SHANKS WHL,1,TRUE
+Pork,SHANKS SLD,1,TRUE
+Pork,RIB HALF,1,TRUE
+Pork,WH LOIN B/O,1,TRUE
+Pork,BABYBACKS,1,TRUE
+Pork,PORTERHOUSE,1,TRUE
+Pork,CHOPS B/I,1,TRUE
+Pork,CHOPS B/O,1,TRUE
+Pork,T-LOIN WHL,1,TRUE
+Pork,T-LOIN SLD,1,TRUE
+Pork,ROAST B/I,1,TRUE
+Pork,ROAST B/O,1,TRUE
+Pork,SPARE RIB WHL,1,TRUE
+Pork,SPARE RIB SLD,1,TRUE
+Pork,ST. LOUIS RIBS,1,TRUE
+Pork,JOWLS WHL,1,TRUE
+Pork,JOWLS SLD,1,TRUE
+Pork,WHOLE HAM,1,TRUE
+Pork,HAM ROAST,1,TRUE
+Pork,HAM STEAKS,1,TRUE
+Pork,PORK STEW,2,FALSE
+Pork,PORK BONES,2,TRUE
+Pork,NECK BONES,1,TRUE
+Pork,LEAF FAT,1,TRUE
+Pork,LIVER,1,FALSE
+Pork,HEARTS,1,FALSE
+Pork,KIDNEYS,1,FALSE
+Pork,TONGUE,1,FALSE
+Pork,BACON SLD,2,TRUE
+Pork,BACON BLK,2,TRUE
+Pork,JOWLS SLD,2,TRUE
+Pork,JOWLS BLK,2,TRUE
+Pork,GROUND PORK,3,FALSE
+Pork,ANDOUILLE L,3,FALSE
+Pork,BRAT L,3,FALSE
+Pork,CAJUN LB,3,FALSE
+Pork,CAJUN L,3,FALSE
+Pork,G-BRAT L,3,FALSE
+Pork,HOT LB,3,FALSE
+Pork,HOT L,3,FALSE
+Pork,HOT BL,3,FALSE
+Pork,HOT P,3,FALSE
+Pork,HOT ITAL LB,3,FALSE
+Pork,HOT ITAL L,3,FALSE
+Pork,KIELBASA L,3,FALSE
+Pork,MILD ITAL LB,3,FALSE
+Pork,MILD ITAL L,3,FALSE
+Pork,MILD LB,3,FALSE
+Pork,MILD L,3,FALSE
+Pork,MILD BL,3,FALSE
+Pork,MILD P,3,FALSE
+Pork,SWEET ITAL LB,3,FALSE
+Pork,SWEET ITAL L,3,FALSE
+Pork,APP CINN LB,3,FALSE
+Pork,APP CINN BL,3,FALSE
+Pork,APP CIN P,3,FALSE
+Pork,CHORIZO LB,3,FALSE
+Pork,CHORIZO L,3,FALSE
+Pork,HOT XSAGE LB,3,FALSE
+Pork,HOT XSAGE L,3,FALSE
+Pork,HOT XSAGE BL,3,FALSE
+Pork,HOT XSAGE P,3,FALSE
+Pork,MAPLE P,3,FALSE
+Pork,MAPLE LB,3,FALSE
+Pork,MAPLE BL,3,FALSE
+Pork,MILD XSAGE LB,3,FALSE
+Pork,MILD XSAGE BL,3,FALSE
+Pork,MILD XSAGE L,3,FALSE
+Pork,MILD XSAGE P,3,FALSE
+Pork,MILD NO SGR LB,3,FALSE
+Pork,HOTDOGS,5,FALSE
+Pork,SM ANDOUILLE,4,FALSE
+Pork,SM BRAT,4,FALSE
+Pork,SM CHORIZO,4,FALSE
+Pork,SM CAJUN,4,FALSE
+Pork,SM G-BRAT,4,FALSE
+Pork,SM KEILBASA,4,FALSE
+Pork,SM HOT,4,FALSE
+Pork,SM HOT X-SAGE,4,FALSE
+Pork,SM HOT ITAL,4,FALSE
+Pork,SM MILD,4,FALSE
+Pork,SM MILD X-SAGE,4,FALSE
+Pork,SM MILD ITAL,4,FALSE
+Pork,SM SWEET ITAL,4,FALSE
+Sheep,SHLD ROAST B/I,1,FALSE
+Sheep,SHLD ROAST B/O,1,FALSE
+Sheep,NECK STEAK,1,FALSE
+Sheep,SHLD CHOPS,1,FALSE
+Sheep,WHL LEG,1,FALSE
+Sheep,LEG B/O,1,FALSE
+Sheep,LEG ROAST B/I,1,FALSE
+Sheep,LEG STEAKS,1,FALSE
+Sheep,SHANKS WHL,1,FALSE
+Sheep,LOIN CHOP,1,FALSE
+Sheep,LOIN ROAST,1,FALSE
+Sheep,RIB WHL,1,FALSE
+Sheep,SPARE RIBS,1,FALSE
+Sheep,RIB CHOPS,1,FALSE
+Sheep,FRENCH RACK,1,FALSE
+Sheep,HEART,1,FALSE
+Sheep,KIDNEYS,1,FALSE
+Sheep,LIVER,1,FALSE
+Sheep,TESTICLES,1,FALSE
+Sheep,TONGUE,1,FALSE
+Sheep,SOUP BONES,1,FALSE
+Sheep,KABOBS,1,FALSE
+Sheep,LAMB STEW,1,FALSE
+Sheep,GROUND LAMB,1,FALSE
+Sheep,BRAT L,1,FALSE
+Sheep,CAJUN L,1,FALSE
+Sheep,CHORIZO LB,1,FALSE
+Sheep,CHORIZO L,1,FALSE
+Sheep,G-BRAT L,1,FALSE
+Sheep,HOT XSAGE LB,1,FALSE
+Sheep,HOT ITAL L,1,FALSE
+Sheep,MAPLE LB,1,FALSE
+Sheep,MILD LB,1,FALSE
+Sheep,SWEET ITAL LB,1,FALSE
+Sheep,SWEET ITAL L,1,FALSE
+Sheep,MERGUES L,1,FALSE
+Goat,SHLD WHL B/I,1,FALSE
+Goat,SHLD WHL B/O,1,FALSE
+Goat,SHLD ROAST B/I,1,FALSE
+Goat,SHLD ROAST B/O,1,FALSE
+Goat,SHLD STEAK B/I,1,FALSE
+Goat,SHLD STEAK B/O,1,FALSE
+Goat,SHLD CHOP B/I,1,FALSE
+Goat,SHLD CHOP B/O,1,FALSE
+Goat,LEG WHL B/I,1,FALSE
+Goat,LEG WHL B/O,1,FALSE
+Goat,LEG ROAST B/I,1,FALSE
+Goat,LEG ROAST B/O,1,FALSE
+Goat,LEG STEAK B/I,1,FALSE
+Goat,SHANKS WHL,1,FALSE
+Goat,SHANKS SLD,1,FALSE
+Goat,WHL LOIN B/I,1,FALSE
+Goat,LOIN CHOP B/I,1,FALSE
+Goat,LOIN ROAST B/I,1,FALSE
+Goat,WHL RIB B/I,1,FALSE
+Goat,RIB CHOPS,1,FALSE
+Goat,SPARE RIBS,1,FALSE
+Goat,HEART,1,FALSE
+Goat,KIDNEYS,1,FALSE
+Goat,LIVER,1,FALSE
+Goat,SOUP BONES,1,FALSE
+Goat,BRAT L,3,FALSE
+Goat,CHORIZO L,3,FALSE
+Goat,HOT LB,3,FALSE
+Goat,HOT L,3,FALSE
+Goat,HOT XSAGE LB,3,FALSE
+Goat,HOT XSAGE L,3,FALSE
+Goat,HOT ITAL L,3,FALSE
+Goat,KIELBASA L,3,FALSE
+Goat,MAPLE LB,3,FALSE
+Goat,MILD LB,3,FALSE
+Goat,MILD L,3,FALSE
+Goat,MILD X-SAGE LB,3,FALSE
+Goat,MILD XSAGE L,3,FALSE
+Goat,SWEET ITAL L,3,FALSE
