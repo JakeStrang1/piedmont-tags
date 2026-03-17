@@ -70,6 +70,7 @@ const TagInfo = ({
 }: TagInfoProps) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const autocompleteRef = useRef<HTMLDivElement>(null)
+    const mouseDownFromAutocompleteInputRef = useRef(false)
     const [isFocused, setIsFocused] = useState(false)
     const hasCalledOnFocusedRef = useRef(false)
     const [manualNumText, setManualNumText] = useState<string>('')
@@ -141,6 +142,13 @@ const TagInfo = ({
     }
 
     const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        // If mouse-down started in an autocomplete text input and mouse-up
+        // happens elsewhere in this row, don't steal focus from the input.
+        if (mouseDownFromAutocompleteInputRef.current) {
+            mouseDownFromAutocompleteInputRef.current = false
+            return
+        }
+
         // If clicking on the autocomplete or its children, let it handle focus normally
         if (autocompleteRef.current?.contains(e.target as Node)) {
             return
@@ -169,6 +177,14 @@ const TagInfo = ({
             ref={containerRef}
             role="button"
             tabIndex={0}
+            onMouseDownCapture={(e) => {
+                const target = e.target as HTMLElement
+                const isTextInput =
+                    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+                mouseDownFromAutocompleteInputRef.current =
+                    isTextInput &&
+                    !!autocompleteRef.current?.contains(target)
+            }}
             onClick={handleClick}
             onKeyDown={handleKeyDown}
             data-quick-mode={quickMode ? 'true' : 'false'}
