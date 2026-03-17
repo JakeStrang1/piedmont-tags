@@ -1,11 +1,10 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { parseLotNumbers } from '../utilities/parseLotNumbers'
 import Tooltip from './Tooltip'
 import { useSpeciesData } from '../hooks/useSpeciesData'
 import Autocomplete from './Autocomplete'
 import TagInfo from './TagInfo'
-
-type EditorMode = 'quick' | 'manual'
+import type { EditorMode } from '../types/presets'
 
 interface TagData {
     index: number
@@ -23,12 +22,25 @@ interface TagEditorProps {
     species: string
     setSpecies: React.Dispatch<React.SetStateAction<string>>
     onFocusTagIndex?: (tagIndex: number) => void
+    mode: EditorMode
+    setMode: React.Dispatch<React.SetStateAction<EditorMode>>
+    presetMode?: boolean
 }
 
-const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies, onFocusTagIndex }: TagEditorProps) => {
-    const [mode, setMode] = useState<EditorMode>('quick')
-
+const TagEditor = ({
+    tags,
+    setTags,
+    tagNumber,
+    setTagNumber,
+    species,
+    setSpecies,
+    onFocusTagIndex,
+    mode,
+    setMode,
+    presetMode = false,
+}: TagEditorProps) => {
     const { speciesData, isLoading } = useSpeciesData()
+    const tagNumberInputRef = useRef<HTMLInputElement>(null)
 
     const derivedLots = useMemo(() => parseLotNumbers(tagNumber), [tagNumber])
     const meaningfulTextClass = '!text-blue-700'
@@ -76,22 +88,23 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
         return clampTagsCount(computed)
     }
 
-    // Global rule: whenever global tag number OR species changes,
-    // update ALL tags' tagNumber/species and recalc numberOfTags.
-    // (Cut types do not change.)
+    // Keep global Tag # synced to all rows.
+    // In preset mode, Tag # is transient and does not drive count changes.
     useEffect(() => {
         setTags((prev) => {
             let didChange = false
             const next = prev.map((t) => {
-                const nextCount = calcNumberOfTags({
-                    tagNumberValue: tagNumber,
-                    speciesValue: species,
-                    cutName: t.cutName,
-                })
+                const speciesToUse = t.species ?? species
+                const nextCount = presetMode
+                    ? t.numberOfTags
+                    : calcNumberOfTags({
+                        tagNumberValue: tagNumber,
+                        speciesValue: speciesToUse,
+                        cutName: t.cutName,
+                    })
 
                 if (
                     t.tagNumber === tagNumber &&
-                    (t.species ?? '') === species &&
                     t.numberOfTags === nextCount
                 ) {
                     return t
@@ -101,13 +114,42 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
                 return {
                     ...t,
                     tagNumber,
-                    species,
                     numberOfTags: nextCount,
                 }
             })
             return didChange ? next : prev
         })
-    }, [tagNumber, species, setTags]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [tagNumber, setTags, presetMode]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Keep global Species synced to all rows and recalculate derived counts.
+    useEffect(() => {
+        setTags((prev) => {
+            let didChange = false
+            const next = prev.map((t) => {
+                const nextCount = calcNumberOfTags({
+                    tagNumberValue: t.tagNumber,
+                    speciesValue: species,
+                    cutName: t.cutName,
+                })
+                const resolvedCount = presetMode ? t.numberOfTags : nextCount
+
+                if (
+                    (t.species ?? '') === species &&
+                    t.numberOfTags === resolvedCount
+                ) {
+                    return t
+                }
+
+                didChange = true
+                return {
+                    ...t,
+                    species,
+                    numberOfTags: resolvedCount,
+                }
+            })
+            return didChange ? next : prev
+        })
+    }, [species, setTags, presetMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const cutTypeOptions = useMemo(() => {
         if (!isSpeciesFromList) return []
@@ -158,7 +200,10 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
                 return {
                     ...t,
                     cutName,
-                    numberOfTags: shouldSync ? nextCalculated : t.numberOfTags,
+                    numberOfTags:
+                        !shouldSync
+                            ? t.numberOfTags
+                            : nextCalculated,
                 }
             })
         )
@@ -193,7 +238,10 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
                 return {
                     ...t,
                     tagNumber: nextTagNumber,
-                    numberOfTags: shouldSync ? nextCalculated : t.numberOfTags,
+                    numberOfTags:
+                        presetMode || !shouldSync
+                            ? t.numberOfTags
+                            : nextCalculated,
                 }
             })
         )
@@ -234,7 +282,10 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
                 return {
                     ...t,
                     species: nextSpecies,
-                    numberOfTags: shouldSync ? nextCalculated : t.numberOfTags,
+                    numberOfTags:
+                        !shouldSync
+                            ? t.numberOfTags
+                            : nextCalculated,
                 }
             })
         )
@@ -252,6 +303,13 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
     // (previously: addNewTag via extra empty row; replaced by Add Cut Type button)
 
     const [focusCutIndex, setFocusCutIndex] = useState<number | null>(null)
+
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            tagNumberInputRef.current?.focus()
+        }, 0)
+        return () => window.clearTimeout(timeout)
+    }, [])
 
     const addEmptyCutType = () => {
         setTags((prev) => {
@@ -281,7 +339,9 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
                 <div className="flex rounded-lg border border-slate-300 bg-slate-100 p-1 shadow-sm">
                     <button
                         type="button"
-                        onClick={() => setMode('quick')}
+                        onClick={() => {
+                            setMode('quick')
+                        }}
                         className={`flex-1 rounded-md px-4 py-2.5 text-sm font-semibold transition-all ${mode === 'quick'
                             ? 'bg-blue-500 text-white shadow-sm'
                             : 'text-slate-500 hover:text-slate-700'
@@ -291,7 +351,9 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
                     </button>
                     <button
                         type="button"
-                        onClick={() => setMode('manual')}
+                        onClick={() => {
+                            setMode('manual')
+                        }}
                         className={`flex-1 rounded-md px-4 py-2.5 text-sm font-semibold transition-all ${mode === 'manual'
                             ? 'bg-orange-500 text-white shadow-sm'
                             : 'text-slate-500 hover:text-slate-700'
@@ -312,6 +374,7 @@ const TagEditor = ({ tags, setTags, tagNumber, setTagNumber, species, setSpecies
 
                 <div className="px-4">
                     <input
+                        ref={tagNumberInputRef}
                         type="text"
                         value={tagNumber}
                         onChange={(e) => handleTagNumberChange(e.target.value)}

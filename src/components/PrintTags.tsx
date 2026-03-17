@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import ReactDOM from 'react-dom/client'
 import React from 'react'
 import WrappedTag from './WrappedTag'
@@ -8,6 +8,12 @@ import TagEditor from './TagEditor'
 import { TAG_MAX_CONTAINER_WIDTH, TAG_GAP } from './tagConstants'
 import { useTagSettings, TagSettingsProvider } from '../hooks/useTagSettings'
 import { getStylesheets } from '../utilities/getStylesheets'
+import {
+    usePresets,
+    getValidatedPresetName,
+} from '../hooks/usePresets'
+import type { EditorMode, PresetComposition } from '../types/presets'
+import ConfirmDialog from './ConfirmDialog'
 
 interface TagData {
     index: number
@@ -17,12 +23,59 @@ interface TagData {
     species?: string
 }
 
+const EMPTY_PRESET_COMPOSITION: PresetComposition = {
+    species: '',
+    tags: [],
+}
+
+const buildPresetComposition = (
+    species: string,
+    tags: TagData[]
+): PresetComposition => ({
+    species,
+    tags: tags
+        .map((tag) => ({
+            index: tag.index,
+            cutName: tag.cutName,
+            numberOfTags: tag.numberOfTags,
+            species: tag.species,
+        }))
+        .sort((a, b) => a.index - b.index),
+})
+
 const PrintTags = () => {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const {
+        presets,
+        isLoading: presetsLoading,
+        savePresetComposition,
+    } = usePresets()
     const { settings } = useTagSettings()
+
+    const selectedPresetIdRaw = searchParams.get('presetId')
+    const selectedPresetId = selectedPresetIdRaw
+        ? Number.parseInt(selectedPresetIdRaw, 10)
+        : null
+    const isPresetMode = selectedPresetId !== null && Number.isFinite(selectedPresetId)
+    const activePreset = useMemo(
+        () =>
+            isPresetMode
+                ? presets.find((preset) => preset.id === selectedPresetId) ?? null
+                : null,
+        [isPresetMode, presets, selectedPresetId]
+    )
+
     const [tags, setTags] = useState<TagData[]>([])
     const [tagNumber, setTagNumber] = useState('')
     const [species, setSpecies] = useState('')
+    const [editorMode, setEditorMode] = useState<EditorMode>('quick')
+    const [presetNameDraft, setPresetNameDraft] = useState('')
+    const [isEditingPresetName, setIsEditingPresetName] = useState(false)
+    const [presetError, setPresetError] = useState<string | null>(null)
+    const [isSavingPreset, setIsSavingPreset] = useState(false)
+    const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false)
+    const [pendingLeavePath, setPendingLeavePath] = useState<string | null>(null)
     const [isTopAligned, setIsTopAligned] = useState(false)
     const [hoveredCardKey, setHoveredCardKey] = useState<string | null>(null)
     const [showSettings, setShowSettings] = useState(false)
@@ -31,8 +84,30 @@ const PrintTags = () => {
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        console.log('tags:', tags)
-    }, [tags])
+        if (!isPresetMode) return
+        if (presetsLoading) return
+        if (!activePreset) {
+            navigate('/')
+            return
+        }
+
+        const composition = activePreset.composition ?? EMPTY_PRESET_COMPOSITION
+        setEditorMode('quick')
+        setSpecies(composition.species)
+        setTagNumber('')
+        setPresetNameDraft(activePreset.name)
+        setIsEditingPresetName(false)
+        setPresetError(null)
+        setTags(
+            composition.tags.map((tag) => ({
+                index: tag.index,
+                tagNumber: '',
+                cutName: tag.cutName,
+                numberOfTags: tag.numberOfTags,
+                species: tag.species,
+            }))
+        )
+    }, [activePreset, isPresetMode, navigate, presetsLoading])
 
     useEffect(() => {
         const checkLayout = () => {
@@ -48,6 +123,82 @@ const PrintTags = () => {
         window.addEventListener('resize', checkLayout)
         return () => window.removeEventListener('resize', checkLayout)
     }, [tags])
+
+    const savedComposition = useMemo(
+        () => activePreset?.composition ?? EMPTY_PRESET_COMPOSITION,
+        [activePreset]
+    )
+    const currentComposition = useMemo(
+        () => buildPresetComposition(species, tags),
+        [species, tags]
+    )
+    const isCompositionDirty = useMemo(() => {
+        if (!isPresetMode || !activePreset) return false
+        return (
+            JSON.stringify(savedComposition) !==
+            JSON.stringify(currentComposition)
+        )
+    }, [
+        activePreset,
+        currentComposition,
+        isPresetMode,
+        savedComposition,
+    ])
+
+    const canSavePresetChanges = isCompositionDirty
+    const isPresetNameDirty = useMemo(() => {
+        if (!isPresetMode || !activePreset) return false
+        return presetNameDraft.trim() !== activePreset.name
+    }, [activePreset, isPresetMode, presetNameDraft])
+    const canSaveAnyPresetChanges = canSavePresetChanges || isPresetNameDirty
+
+    const handlePresetNameBlur = () => {
+        if (!activePreset) return
+        const trimmed = presetNameDraft.trim()
+        if (trimmed.length < 1 || trimmed.length > 50) {
+            setPresetNameDraft(activePreset.name)
+        } else {
+            setPresetNameDraft(trimmed)
+        }
+        setIsEditingPresetName(false)
+    }
+
+    const handleSavePreset = async () => {
+        if (!activePreset) return
+        try {
+            setPresetError(null)
+            setIsSavingPreset(true)
+            const validatedName = getValidatedPresetName(presetNameDraft)
+            await savePresetComposition(
+                activePreset.id,
+                validatedName,
+                currentComposition
+            )
+            setPresetNameDraft(validatedName)
+        } catch (error) {
+            setPresetError(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to save preset changes.'
+            )
+        } finally {
+            setIsSavingPreset(false)
+        }
+    }
+
+    const confirmLeavePreset = () => {
+        if (!isPresetMode) return true
+        return !canSaveAnyPresetChanges
+    }
+
+    const requestLeave = (path: string) => {
+        if (confirmLeavePreset()) {
+            navigate(path)
+            return
+        }
+        setPendingLeavePath(path)
+        setIsDiscardDialogOpen(true)
+    }
 
     const addCard = () => {
         setTags((prev) => {
@@ -265,22 +416,102 @@ const PrintTags = () => {
                             <button
                                 type="button"
                                 className="text-blue-600 underline-offset-2 hover:text-blue-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                                onClick={() => navigate('/')}
+                                onClick={() => {
+                                    requestLeave('/')
+                                }}
                             >
                                 Main Menu
                             </button>
                             <span className="text-slate-400">›</span>
-                            <span>Print Tags</span>
+                            {!isPresetMode && <span>Print Tags</span>}
+                            {isPresetMode && (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="text-blue-600 underline-offset-2 hover:text-blue-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                                        onClick={() => {
+                                            requestLeave('/?presets=1')
+                                        }}
+                                    >
+                                        Presets
+                                    </button>
+                                    <span className="text-slate-400">›</span>
+                                    <span>{activePreset?.name ?? 'Preset'}</span>
+                                </>
+                            )}
                         </div>
                         <button
                             type="button"
                             className="flex h-9 w-9 items-center justify-center rounded-md text-xl text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
-                            onClick={() => navigate('/')}
+                            onClick={() => {
+                                requestLeave('/')
+                            }}
                             aria-label="Close"
                         >
                             ×
                         </button>
                     </div>
+                    {isPresetMode && !presetsLoading && activePreset && (
+                        <div className="border-b-2 border-emerald-400 bg-emerald-100 px-4 py-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 text-xl text-emerald-900">
+                                    <span className="font-semibold">PRESET:</span>
+                                    {isEditingPresetName ? (
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            value={presetNameDraft}
+                                            maxLength={50}
+                                            onChange={(e) =>
+                                                setPresetNameDraft(
+                                                    e.target.value
+                                                )
+                                            }
+                                            onBlur={handlePresetNameBlur}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handlePresetNameBlur()
+                                                }
+                                                if (e.key === 'Escape') {
+                                                    setPresetNameDraft(
+                                                        activePreset.name
+                                                    )
+                                                    setIsEditingPresetName(false)
+                                                }
+                                            }}
+                                            className="max-w-full border-0 border-b-2 border-emerald-700 bg-transparent px-1 py-0 text-xl font-normal text-emerald-900 focus:border-emerald-700 focus:outline-none focus:ring-0"
+                                            style={{ width: '50ch' }}
+                                        />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setIsEditingPresetName(true)
+                                            }
+                                            className="border-0 border-b-2 border-transparent px-1 text-left text-xl font-normal text-emerald-900 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                                        >
+                                            {presetNameDraft}
+                                        </button>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleSavePreset()}
+                                    disabled={
+                                        isSavingPreset || !canSaveAnyPresetChanges
+                                    }
+                                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-slate-400"
+                                >
+                                    Save Preset
+                                </button>
+                            </div>
+                            {presetError && (
+                                <p className="mt-2 text-sm text-red-700">
+                                    {presetError}
+                                </p>
+                            )}
+                        </div>
+                    )}
                     <div className="flex flex-1 overflow-hidden bg-slate-50">
                         {/* Left Column - Tag Content */}
                         <div className="relative flex flex-1 overflow-hidden">
@@ -400,11 +631,33 @@ const PrintTags = () => {
                             species={species}
                             setSpecies={setSpecies}
                             onFocusTagIndex={scrollPreviewToTagIndex}
+                            mode={editorMode}
+                            setMode={setEditorMode}
+                            presetMode={isPresetMode}
                         />
                     </div>
                 </div>
             </div>
             <TagSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
+            <ConfirmDialog
+                isOpen={isDiscardDialogOpen}
+                title="Discard changes?"
+                message="You have unsaved preset changes. Discard them and continue?"
+                confirmLabel="Discard"
+                cancelLabel="Cancel"
+                dangerConfirm
+                onCancel={() => {
+                    setIsDiscardDialogOpen(false)
+                    setPendingLeavePath(null)
+                }}
+                onConfirm={() => {
+                    if (pendingLeavePath) {
+                        navigate(pendingLeavePath)
+                    }
+                    setIsDiscardDialogOpen(false)
+                    setPendingLeavePath(null)
+                }}
+            />
         </>
     )
 }
