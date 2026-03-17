@@ -38,6 +38,7 @@ const Autocomplete = ({
     const containerRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLUListElement>(null)
+    const interactingWithMenuRef = useRef(false)
     const [menuRect, setMenuRect] = useState<{
         top: number
         left: number
@@ -154,13 +155,18 @@ const Autocomplete = ({
 
         const onResize = () => recomputeMenuRect()
         const onScroll = () => recomputeMenuRect()
+        const onMouseUp = () => {
+            interactingWithMenuRef.current = false
+        }
 
         window.addEventListener('resize', onResize)
         // capture=true so we respond to scrolls on any parent scroller
         window.addEventListener('scroll', onScroll, true)
+        window.addEventListener('mouseup', onMouseUp, true)
         return () => {
             window.removeEventListener('resize', onResize)
             window.removeEventListener('scroll', onScroll, true)
+            window.removeEventListener('mouseup', onMouseUp, true)
         }
     }, [isOpen])
 
@@ -198,6 +204,8 @@ const Autocomplete = ({
     }
 
     const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (interactingWithMenuRef.current) return
+
         const nextFocused = e.relatedTarget as Node | null
         // If focus is still within the autocomplete container (e.g. interacting with the menu),
         // don't close here.
@@ -283,6 +291,9 @@ const Autocomplete = ({
             {isOpen && !disabled && filteredOptions.length > 0 && menuRect && (
                 <ul
                     ref={listRef}
+                    onMouseDown={() => {
+                        interactingWithMenuRef.current = true
+                    }}
                     className="fixed z-50 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg"
                     style={{
                         left: `${menuRect.left}px`,
@@ -323,6 +334,9 @@ const Autocomplete = ({
             )}
             {isOpen && !disabled && filteredOptions.length === 0 && inputValue && menuRect && (
                 <ul
+                    onMouseDown={() => {
+                        interactingWithMenuRef.current = true
+                    }}
                     className="fixed z-50 rounded-md border border-slate-200 bg-white shadow-lg"
                     style={{
                         left: `${menuRect.left}px`,
