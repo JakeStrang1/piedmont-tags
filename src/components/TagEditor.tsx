@@ -303,6 +303,7 @@ const TagEditor = ({
     // (previously: addNewTag via extra empty row; replaced by Add Cut Type button)
 
     const [focusCutIndex, setFocusCutIndex] = useState<number | null>(null)
+    const [showCutTypePicker, setShowCutTypePicker] = useState(false)
 
     useEffect(() => {
         const timeout = window.setTimeout(() => {
@@ -310,6 +311,63 @@ const TagEditor = ({
         }, 0)
         return () => window.clearTimeout(timeout)
     }, [])
+
+    useEffect(() => {
+        if (!showCutTypePicker) return
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setShowCutTypePicker(false)
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [showCutTypePicker])
+
+    const allSpeciesCutTypeNames = useMemo(() => {
+        if (!isSpeciesFromList) return []
+        const match = speciesData.find((entry) => entry.species === species)
+        if (!match) return []
+        return match.cuts
+            .map((cut) => cut.name)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b))
+    }, [isSpeciesFromList, species, speciesData])
+
+    const selectedCutTypeSet = useMemo(() => {
+        const set = new Set<string>()
+        for (const tag of tags) {
+            if (tag.cutName) {
+                set.add(tag.cutName)
+            }
+        }
+        return set
+    }, [tags])
+
+    const toggleCutTypeSelection = (cutName: string) => {
+        setTags((prev) => {
+            const hasCut = prev.some((tag) => tag.cutName === cutName)
+            if (hasCut) {
+                return prev.filter((tag) => tag.cutName !== cutName)
+            }
+
+            const nextIndex =
+                prev.length === 0 ? 1 : Math.max(...prev.map((tag) => tag.index)) + 1
+            return [
+                ...prev,
+                {
+                    index: nextIndex,
+                    tagNumber,
+                    species,
+                    cutName,
+                    numberOfTags: calcNumberOfTags({
+                        tagNumberValue: tagNumber,
+                        speciesValue: species,
+                        cutName,
+                    }),
+                },
+            ]
+        })
+    }
 
     const addEmptyCutType = () => {
         setTags((prev) => {
@@ -333,7 +391,8 @@ const TagEditor = ({
     }
 
     return (
-        <div className="flex h-full w-[400px] flex-col overflow-hidden border-l border-slate-200 bg-white/90 py-0">
+        <>
+            <div className="flex h-full w-[400px] flex-col overflow-hidden border-l border-slate-200 bg-white/90 py-0">
             {/* Mode Toggle */}
             <div className="bg-slate-700 px-4 pb-3 pt-4">
                 <div className="flex rounded-lg border border-slate-300 bg-slate-100 p-1 shadow-sm">
@@ -437,8 +496,19 @@ const TagEditor = ({
 
                 {/* Cut Types */}
                 <div className="mt-2 bg-slate-700 px-4 py-2">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                        Cut Types
+                    <div className="flex items-center justify-between">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+                            Cut Types
+                        </div>
+                        {isSpeciesFromList && (
+                            <button
+                                type="button"
+                                onClick={() => setShowCutTypePicker(true)}
+                                className="text-xs font-medium text-blue-200 underline-offset-2 hover:text-blue-100 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-200"
+                            >
+                                Show all options
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="cuts flex-1 overflow-y-auto">
@@ -545,7 +615,64 @@ const TagEditor = ({
                     </div>
                 </div>
             </div>
-        </div >
+            </div>
+
+            {showCutTypePicker && (
+                <>
+                    <div
+                        className="fixed inset-0 z-50 bg-black/40"
+                        onClick={() => setShowCutTypePicker(false)}
+                        aria-hidden="true"
+                    />
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-5">
+                        <div
+                            className="flex w-full max-w-5xl flex-col rounded-xl border border-slate-300 bg-white shadow-2xl"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                                <div>
+                                    <h3 className="text-xl font-semibold text-slate-900">
+                                        All Cut Types
+                                    </h3>
+                                    <p className="text-sm text-slate-600">
+                                        {species}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCutTypePicker(false)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-md text-xl text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800"
+                                    aria-label="Close cut type picker"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                    {allSpeciesCutTypeNames.map((cutName) => {
+                                        const isSelected = selectedCutTypeSet.has(cutName)
+                                        return (
+                                            <button
+                                                key={cutName}
+                                                type="button"
+                                                onClick={() => toggleCutTypeSelection(cutName)}
+                                                className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${isSelected
+                                                    ? 'border-blue-700 bg-blue-600 text-white'
+                                                    : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-100'
+                                                    }`}
+                                            >
+                                                {cutName}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+        </>
     )
 }
 
