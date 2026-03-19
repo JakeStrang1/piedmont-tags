@@ -330,7 +330,6 @@ const TagEditor = ({
         return match.cuts
             .map((cut) => cut.name)
             .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b))
     }, [isSpeciesFromList, species, speciesData])
 
     const selectedCutTypeSet = useMemo(() => {
