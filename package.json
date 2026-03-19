@@ -1,7 +1,7 @@
 {
   "name": "piedmont-tags",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "author": "Jake Strang Software",
   "scripts": {
@@ -38,6 +38,9 @@
   },
   "main": "dist-electron/main.js",
   "build": {
+    "directories": {
+      "output": "release/${version}"
+    },
     "files": [
       "**/*",
       "!src/assets/presets.json"
